@@ -1,4 +1,4 @@
-s---
+---
 title: Programowanie Funkcyjne
 subtitle: Wyższe klasy
 author:  Marcin Benke
