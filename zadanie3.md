@@ -74,3 +74,37 @@ snoc :: SnocList a -> a -> SnocList a
 ```
 
 oraz instancje `Eq, Show, Semigroup, Monoid, Functor, Applicative, Alternative` (mozna używać `deriving`)
+
+## Wymagania techniczne
+
+Analogicznie jak w poprzednio, w tym zadaniu tworzymy pakiet cabal o nazwie `identyfikator-zadanie3`
+(identyfikator ze students, np. mb128410)
+który powinien budować się przy użyciu narzędzi ze students (GHC 9.0.2, cabal 3.4);
+mile widziane, zeby budowal się też z nowszymi wersjami GHC (np 9.4.8, 9.8.2)
+
+Pakiet powinien dostarczać co najmniej plik wykonywalny `zadanie3`, n.p.
+
+```
+$ cabal run -- zadanie3
+Usage: zadanie3 [--help] [file]
+  --help  - display this message
+  file    - file with program to reduce
+```
+
+Oddajemy pojedynczy plik `.tar.gz` stworzony poprzez `cabal sdist`
+
+```
+$ cabal sdist
+Wrote tarball sdist to
+/home/ben/Zajecia/pf/code/zadanie3/dist-newstyle/sdist/zadanie3-0.1.0.0.tar.gz
+```
+
+Proszę sprawdzić, że pakiet otrzymany z rozpakowania tego pliku się buduje.
+
+Zadanie MUSI być rozwiązane samodzielnie.
+Wszelkie zapożyczenia muszą być wyraźnie zaznaczone z podaniem źródła.
+Dotyczy to także kodu wygenerowanego/zasugerowanego przez narządzia AI i pokrewne
+(VS Code, Copilot, ChatGPT, Claude itp.)
+
+Ponadto student musi umieć objaśnić sposób działania każdego fragmentu oddanego kodu
+(wyjaśnienia typu "Znalazłem na Stackoverflow/Copilot mi podpowiedział i działa ale nie wiem jak" itp => 0p).
