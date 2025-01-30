@@ -227,7 +227,7 @@ Początkowo stosowano perwsze podejście: funkcje `liftM .. liftM5`, ale to mał
 
 ### Lift me to the stars
 
-Później zauważono, że drugie podejście jest lepsze:
+drugie podejście jest lepsze, `<$>` i `<*>` (apply) pozwalają wyrazić `fmap_n` dla n>0:
 
 ``` haskell
 (<*>) ::  Maybe (a -> b) -> Maybe a -> Maybe b
@@ -238,8 +238,8 @@ fmap3 f a b c = f <$> a <*> b <*> c
 ...
 ```
 
-Czyli `<$>` i `<*>` pozwalają wyrazić `fmap_n` dla n>0; pozostaje n=0.<br />
-Dla `Maybe` można użyć `Just`, ale chcemy stworzyć ogólny mechanizm:
+Czyli  pozostaje n=0;
+dla `Maybe` można użyć `Just`, ale chcemy stworzyć ogólny mechanizm:
 
 ``` haskell
 class Functor f => Applicative f where
@@ -299,7 +299,7 @@ ale podobny charakter mają inne rodzaje efektów, np.
 ``` haskell
 ghci> :t getLine
 getLine :: IO String
-ghci> (++) <$> getLine <*> getLine
+ghci> (++) <$> getLine <*> getLine    -- albo: liftA2 (++) getLine getLine
 Ala
 bama
 "Alabama"
@@ -558,7 +558,7 @@ za chwilę zobaczymy jak można je wykorzystać.
 
 ### Return of the ~~Jedi~~ Monoid
  Monoid pozwala na utworzenie jednej wartości na podstawie zawartości kolekcji
- (czyli to o jest esencją funkcji typu `fold`);<br/>
+ (to co jest esencją funkcji typu `fold`);<br/>
  na przykład obliczenie sumy czy stworzenie listy elementów kolekcji.
 
 Na przykład dla list moglibyśmy napisać
@@ -713,7 +713,7 @@ foldr f z t = appEndo (foldMap (Endo . f) t) z
 
 Implementacja `foldr` wykorzystuje monoid `Endo`:
 
-- każdy element jest mapowany na jego działanie; 
+- każdy element jest mapowany na jego działanie ($x\mapsto f\, x$); np dla `f = (+)` element `x` przechodzi na `(x+)`
 - `foldMap` sklada je w jedną funkcję
 - ta funkcja jest stosowana do wartości `z`
 
@@ -764,8 +764,7 @@ class (Functor t, Foldable t) => Traversable t where
   sequenceA = traverse id  -- a ~ f b
 ```
 
-`traverse` dla każdego elementu `a` kolekcji wybiera akcję typu `f b`,
-wykonuje te akcje w kolejności i zbiera wyniki
+`traverse f` dla każdego elementu `x` kolekcji wybiera akcję `f x`, wykonuje te akcje w kolejności i zbiera wyniki
 
 Skoro `f` jest konstruktorem obliczenia (efektu), a `t` konstruktorem kolekcji, to `f (t b)`
 jest obliczeniem dającym kolekcję wyników.
@@ -834,6 +833,101 @@ class Liftable f where
 ```
 
 pokaż, że jest ona wzajemnie definiowalna z  `Applicative` (przynajmniej w sensie typów)
+
+# Zipper (Suwak)
+
+Suwak (ang. `Zipper`) jest konstrukcją ułatwiającą nawigację w złożonych strukturach i ich lokalną modyfikację
+
+``` haskell
+ghci> start
+{Bin (Bin (Tip 1) (Tip 2)) (Tip 7)}
+
+ghci> right it
+(Bin (Bin (Tip 1) (Tip 2)) {Tip 7})
+
+ghci> modifyHere (const (Bin (Tip 3) (Tip 4))) it
+(Bin (Bin (Tip 1) (Tip 2)) {Bin (Tip 3) (Tip 4)})
+
+ghci> modifyHere ($> 11) it
+(Bin (Bin (Tip 1) (Tip 2)) {Bin (Tip 11) (Tip 11)})
+
+ghci> up it
+{Bin (Bin (Tip 1) (Tip 2)) (Bin (Tip 11) (Tip 11))}
+
+ghci> left it
+(Bin {Bin (Tip 1) (Tip 2)} (Bin (Tip 11) (Tip 11)))
+
+ghci> right it
+(Bin (B Tip 1 {Tip 2}) (Bin (Tip 11) (Tip 11)))
+```
+## Implementacja
+
+Kontekst
+``` haskell
+data Cxt a = Top | L (Cxt a) (Tree a) | R (Tree a) (Cxt a)
+```
+
+Lokalizacja
+
+``` haskell
+type Loc a = (Tree a, Cxt a)
+
+modifyHere :: (Tree a -> Tree a) -> Loc a -> Loc a
+modifyHere f (e, c) = (f e, c)
+```
+
+Nawigacja
+``` haskell
+top :: Tree a -> Loc a
+top t = (t, Top)
+
+left, right, up :: Loc a -> Loc a
+left  (Bin l r, c) = (l, L c r)
+right (Bin l r, c) = (r, R l c)
+
+up (t, L c r) = (Bin t r, c)
+up (t, R l c) = (Bin l t, c)
+```
+
+## Alternatywna prezentacja
+
+Równoważną (w pewnym sensie dualną) reprezentacją
+jest opis ścieżki od korzenia zawierający kierunki ruchu<br/>oraz mijane po drodze poddrzewa:
+
+``` haskell
+data Dir = DL | DR deriving (Show, Eq)
+type Path a = [(Dir, Tree a)] 
+type Foc a = (Tree a, Path a)
+```
+Podstawowanica polega na tym, że suwak przechowuje ścieżkę w odwrotnej kolejności, so usprawnia nawigację.
+
+Napisz funkcje przekształcające pomiedzy tymi reprezentacjami
+
+``` haskell
+toFoc   :: Loc a -> Foc a
+fromFoc :: Foc a -> Loc a
+```
+
+## Ćwiczenia
+
+1. Napisz funkcję `showLoc` wypisującą drzewa z lokalizacją jak widzieliśmy wcześniej
+
+``` haskell
+(Bin (Bin (Tip 1) (Tip 2)) {Tip 7})
+```
+
+(instancja `Show` będzie wymagała dodania pragmy `{-# OVERLAPPING #-}` )
+
+2. Stwórz zipper dla typu wyrażeń
+
+``` haskell
+data Expr = Var Name
+          | Con Name
+          | Expr :$ Expr
+          | IntLit Integer
+```
+
+można też użyć typu parametryzowanego: `Exp a = a | ...`
 
 # The End(o)
 
