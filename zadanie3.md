@@ -1,6 +1,6 @@
 ---
 title: Zadanie 3
---- 
+---
 
 W tym zadaniu rozszerzamy język z Zadania 2 o konstruktory wartości i dopasowanie wzorca. Tym niemniej nadal nie wprowadzamy żadnej kontroli typów.
 
@@ -58,7 +58,27 @@ Takie rozwiązania mogą liczyć (o ile nie mają innych braków) na ok. 60-70% 
 
 Jednym ze sposobów rozwiązania tego problemu jest precyzyjne odnotowywanie wszystkich kroków wraz z kontekstem w jaki się odbywają. Można wykorzystać do tego celu monadę stanu, która będzie przechowywać historię.
 Stan może ponadto zawierać także listę definicji i ilość pozostałego "paliwa" (kroków, po których uznamy, że obliczenie jest zapętlone lub za długie do wyświetlenia), tudzież inne informacje które uznamy za potrzebne.
-Do reprezentacji kontekstu i nawigacji wewnątrz wyrażen mozna uzyć techniki "zipper".
+Do reprezentacji kontekstu i nawigacji wewnątrz wyrażen mozna uzyć techniki "zipper" (ewentualnie po prostu ścieżki zbędącej listą elementów "lewo-prawo", ale to słabsz rozwiązanie).
+
+``` haskell
+two = S (S Z)
+add Z n = n
+add (S m) n = S (add m n)
+main = add two two
+------------------------------------------------------------
+{main}
+{add two two}
+add {S (S Z)} two
+add {S (S Z)} two
+{S (add (S Z) two)}
+S {add (S Z) two}
+S {S (add Z two)}
+S (S {add Z two})
+S (S {two})
+S (S {S (S Z)})
+S (S (S {S Z}))
+S (S (S (S {Z})))
+```
 
 ## Sekwencje
 
