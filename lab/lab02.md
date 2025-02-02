@@ -54,6 +54,10 @@ toList :: Tree a -> [a]
 -- [1,2,3,4,5,6,7]
 ```
 
+Rozwiąż
+
+https://leetcode.com/problems/construct-string-from-binary-tree/ - w Haskellu i innym wybranym języku programowania.
+
 ## Kombinatory
 
 Rozważamy wyrażenia złozone z predefiniowanych kombinatorów, zmiennych  i aplikacji.
