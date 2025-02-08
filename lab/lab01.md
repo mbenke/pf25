@@ -8,9 +8,6 @@ Zainstalować rekomendowane wersje GHC, cabal, HLS.
 
 Stack nie jest wymagany.
 
-
-**FIXME:** sprawdzic wersję ghc na students w trakcie roku
-
 1. Obliczanie wyrażeń w ghci
 
 ``` haskell
@@ -99,4 +96,26 @@ do przetestowania swoich implementacji
 -- 5
 -- >>> runNat (mul two three)
 -- 6
+```
+## Operacje na napisach
+
+Wypróbuj (wpisuj kolejno w ghci; it oznacza wartość ostatniego wyrażenia)
+
+``` haskell
+s = "Ala ma kota"
+reverse s
+reverse it
+words s
+unlines it
+lines it
+concat it
+unwords(reverse(words s))
+(unwords . reverse . words) it  -- nawiasy!
+drop 4 s
+take 2 it
+takeWhile (<'n') s
+isVowel = flip elem "aeiouy"
+filter isVowel s
+filter (not . isVowel) s
+filter (/=' ') s
 ```
