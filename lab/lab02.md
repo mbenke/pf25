@@ -30,7 +30,7 @@ second :: (b -> d) -> (a, b) -> (a, d)
 
 ## Wycinanki
 
-Napisz funkcje 
+Napisz funkcje
 - obliczające listę dzielników (właściwych) danej liczby całkowitej
 - `isPrime` - czy argument jest liczbą pierwszą
 - trójki pitagorejskie w danym zakresie
@@ -45,7 +45,7 @@ Napisz funkcje
 
 ``` haskell
 -- Pełne drzewo binarne ponumerowane infiksowo od lewej do prawej
-fullTree :: Int -> Tree Int    
+fullTree :: Int -> Tree Int
 -- >>> fullTree 2
 -- Node 2 (Node 1 Empty Empty) (Node 3 Empty Empty)
 
@@ -58,14 +58,38 @@ Rozwiąż
 
 https://leetcode.com/problems/construct-string-from-binary-tree/ - w Haskellu i innym wybranym języku programowania.
 
+Napisz funkcje
+
+``` haskell
+fullTreeFrom :: Int -> Int -> Tree Int
+leftistFromTo
+rightistFromTo
+
+-- >>> fullTreeFrom 11 3
+-- (14 (12 11 13) (16 15 17))
+-- >>> rightistFromTo 3 7
+-- (3 () (4 () (5 () (6 () 7))))
+-- >>> leftistFromTo 3 7
+-- (7 (6 (5 (4 3 ()) ()) ()) ())
+```
+
+Czy potrafisz je napisać tak aby działały nie tylko dla liczb, ale na przykład też
+
+``` haskell
+-- >>> fullTreeFrom 'a' 3
+-- ('d' ('b' 'a' 'c') ('f' 'e' 'g'))
+-- >>> rightistFromTo 'h' 'k'
+-- ('h' () ('i' () ('j' () 'k')))
+```
+
 ## Kombinatory
 
 Rozważamy wyrażenia złozone z predefiniowanych kombinatorów, zmiennych  i aplikacji.
 
 ``` haskell
-data Expr = S | K | I | B 
-          | Expr :$ Expr 
-          | X | Z | V Int  
+data Expr = S | K | I | B
+          | Expr :$ Expr
+          | X | Z | V Int
           deriving (Show, Read)
 ```
 konstruktor `:$` reprezentuje aplikację; wiąże w lewo.
