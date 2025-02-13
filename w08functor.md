@@ -927,8 +927,15 @@ data Expr = Var Name
           | IntLit Integer
 ```
 
-można też użyć typu parametryzowanego: `Exp a = a | ...`
+można też użyć typu parametryzowanego:
 
+``` haskell
+type Expr = Exp a
+data Exp a = a
+           | Con Name
+           | Expr :$ Expr
+           | IntLit Integer
+```
 # The End(o)
 
 

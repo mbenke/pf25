@@ -19,7 +19,7 @@ date: Wykład 10/2025
 
 ## Parsery - analiza tekstu
 
-Parser analizuje tekst zgodnie z zadaną definicją języka (często gramatyką) 
+Parser analizuje tekst zgodnie z zadaną definicją języka (często gramatyką)
 
 Jeśli się uda, buduje wartość odpowiadającą tekstowi wejściowemu (często drzewo, tzw AST - Abstract Syntax Tree);<br />
 w przypadku porażki pożądany jest pomocny komunikat o błędzie.
@@ -27,10 +27,10 @@ w przypadku porażki pożądany jest pomocny komunikat o błędzie.
 W językach imperatywnych zwykle uzywa się automatu ze stosem.
 
 W językach funkcyjnych to też możliwe, ale jest też inny sposób: tzw. *kombinatory parserów*:<br />
-parsery są funkcjami, które mozemy ze sobą łączyć przy użyciu kombinatorów  
+parsery są funkcjami, które mozemy ze sobą łączyć przy użyciu kombinatorów
 
 **Przykład:**
-``` haskell 
+``` haskell
 digits :: Parser String
 digits = some digit
 
@@ -38,16 +38,16 @@ nat, int :: Parser Int
 nat = read <$> digits
 
 int = nat <|> negative
-negative = do char '-'; 
+negative = do char '-';
               n <- nat
               return (-n)
-        
+
 -- negative = char '-' *> negate <$> nat
 ```
 
 ### Typ parsera
 
-Pierwsze przybliżenie: parser dla typu **a** dostaje listę znaków i daje rozpoznany w nim element **a** (tak jak klasa **Read**)
+Pierwsze przybliżenie: parser dla typu **a** dostaje napis i daje rozpoznany w nim element **a** (tak jak klasa **Read**)
 
 ``` haskell
 read :: Read a => String -> a
@@ -70,7 +70,7 @@ Pomysł 3:
 type ReadS a = String -> [(a, String)]
 ```
 
-Parser ``zużywa'' pewien prefiks wejścia aby odczytać **a**, oddaje niewykorzystaną resztę wejścia (którą może odczytać kolejny parser)
+Parser ``konsumuje'' pewien prefiks wejścia aby odczytać **a**, oddaje niewykorzystaną resztę wejścia (którą może odczytać kolejny parser)
 
 Wynikiem działania jest lista możliwych odczytań (być może pusta).
 
@@ -85,7 +85,7 @@ String -> (a, String)
 
 reprezentuje obliczenia ze stanem typu String
 
-z kolei 
+z kolei
 
 ``` haskell
 newtype Parser a = P { runP :: String -> [(a, String)] }
@@ -96,7 +96,7 @@ newtype Parser a = P { runP :: String -> [(a, String)] }
 ``` haskell
 instance Functor Parser where
   -- fmap :: (a -> b) -> Parser a -> Parser b
-  fmap f (P p) = P $ \s -> [(f a, s') | (a, s') <- p s] 
+  fmap f (P p) = P $ \s -> [(f a, s') | (a, s') <- p s]
 
 instance Monad Parser where
     -- (>>=) :: Parser a -> (a -> Parser b) -> Parser b
@@ -122,7 +122,7 @@ Pamiętajmy, że przy takich typach, alternatywa jest "lewicowa": parser `p1 <|>
 a czasem jeszcze bardziej - `p2` wchodzi do gry tylko gdy `p1` zawiedzie nie konsumując wejścia (nie wracamy do raz przeczytanych znaków).
 W razie potrzeby powrotu można użyć kombinatora `try`, zwykle w wersji `try p1 <|> p2`.
 
-Biblioteki używają często bardziej złożonych typów.<br /> 
+Biblioteki używają często bardziej złożonych typów.<br />
 W naszych przykładach wejście jest typu **String**, ale może być **Text**, **ByteString** lub inne.
 
 ## Łączenie monad
@@ -200,11 +200,11 @@ reader = lift . reader
 -- ...
 ```
 
-Niestety funkcje o bardziej skomplikowanych typach (`catchError`, `local`) wymagają secjalnej troski.
+Niestety funkcje o bardziej skomplikowanych typach (`catchError`, `local`) wymagają specjalnej troski.
 
 ### Biblioteki
 
-Oczywiście nie musimy tego pisać sami, wszystko to dostepne jest w bibliotekach np. `transformers`, `mtl`. 
+Oczywiście nie musimy tego pisać sami, wszystko to dostepne jest w bibliotekach np. `transformers`, `mtl`.
 
 Musimy tylko pamietać aby dodać je do `build-requires` w naszym `.cabal`
 
@@ -230,6 +230,29 @@ runEnvR r = runReader r emptyEnv
 runTcS :: StateT TcState m a -> m (a, TcState)
 runTcS t = runStateT t initState
 ```
+### MonadIO
+
+Szczególnego traktowania przy łączeniu monad wymaga też IO - musi być na samym dole stosu monad, na przykład.
+
+``` haskell
+type RedM a = StateT RedS IO a
+
+runROM :: RedM a  -> IO (a, RedS)
+runROM = flip runStateT initRS
+
+writeln :: String -> RedM ()
+writeln = liftIO . putStrLn
+
+debugs :: [String] -> RedM ()
+debugs = whenDebug . writeln . unwords -- whenDebug czyta stan
+
+emitFunDef :: FunDef -> RedM [Core.Stmt]
+emitFunDef (FunDef sig body) = do
+  (name, args, typ) <- translateSig sig
+  debugs ["emitFunDef ", name, " :: ", show typ]
+  coreBody <- emitStmts body
+  pure [Core.SFunction name args typ coreBody]
+```
 
 ## Lewostronna rekursja
 
@@ -237,7 +260,7 @@ Popatrzmy na typową gramatykę dla wyrażeń:
 
 ```
 Exp  ::= Exp "-" Term | Term
-Term ::= Term "*" Factor | Factor 
+Term ::= Term "*" Factor | Factor
 Factor ::= int | "(" Exp ")"
 ```
 
@@ -278,5 +301,63 @@ chainl1 p op = do { x <- p; rest x } where
                ; y <- p
                ; rest (f x y)
                }
-              <|> return x  
+              <|> return x
 ```
+
+### Przykład
+
+``` haskell
+pStmts :: Parser [Stmt]
+pStmts = many1 pStmt
+
+pStmt :: Parser Stmt
+pStmt = do
+  v <- identifier
+  foo <- symbol "="
+  e <- pExp
+  pure (v := e)
+
+pExp, pTerm, pF :: Parser Exp
+pExp = pTerm `chainl1` pAdd where pAdd = symbol "+" >> pure EAdd
+
+pTerm = pF `chainl1` pMul where pMul = symbol "*" >> pure EMul
+
+pF = EInt <$> integer <|> EVar <$> identifier <|> parens pExp
+```
+
+## Odstępy
+
+``` haskell
+ghci> parse ((,) <$> digit <*> digit) "12"
+Right ('1','2')
+ghci> parse ((,) <$> nat <*> nat) "12"
+Left "expected digit"
+ghci> parse ((,) <$> nat <*> nat) "1 2"
+Left "expected digit"
+```
+Można sobie  poradzić tak:
+
+``` haskell
+space :: Parser ()
+space = many (satisfy isSpace) >> pure ()
+
+lexeme :: Parser a -> Parser a
+lexeme p = space *> p <* space
+  -- do { space; v <- p; space; pure v}
+
+symbol :: String -> Parser String
+symbol = lexeme . string
+
+parens :: Parser a -> Parser a
+parens p = symbol "(" *> p <* symbol ")"
+
+natural :: Parser Int
+natural = lexeme nat
+
+-- >>> parse ((,) <$> natural <*> natural) "1 2"
+-- Right (1,2)
+```
+
+## Biblioteki  - kombinatory parsujące
+
+parsec, megaparsec

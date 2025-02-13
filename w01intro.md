@@ -8,7 +8,7 @@ date: Wykład 1/2025
 # Obietnica
 
 >    Lisp is worth learning for [...] the profound enlightenment experience you will have when you finally get it.<br/>
-> That experience will make you a better programmer for the rest of your days,even if you never actually use Lisp itself a lot [...]<br/>
+> That experience will make you a better programmer for the rest of your days,even if you never actually use Lisp [...]<br/>
 > the same can be said of Haskell, and for very similar reasons.
 
 — Eric S. Raymond, *How to Become a Hacker*
