@@ -24,7 +24,7 @@ Podobne funkcje możmy pisać dla innych struktur np. drzew
 
 ``` haskell
 mapTree :: (a -> b) -> Tree a -> Tree b
-mapTree f = go where 
+mapTree f = go where
   go Empty = Empty
   go (Node x l r) = Node (f x) (go l) (go r)
 ```
@@ -72,7 +72,7 @@ mapTree f (Branch l r) = Branch (m l) (m r) where
 m = mapTree f
 ```
 **Leaf** jest 1-argumentowym konstruktorem,<br/>
-**Branch** — 2-argumentowym. 
+**Branch** — 2-argumentowym.
 
 Per analogiam mówimy, że **Tree** jest jednoargumentowym *konstruktorem typu*:
 
@@ -113,7 +113,7 @@ instance Functor Tree where
 instance Functor Maybe where
 ```
 
-`Tree` i `Maybe` nie są typami, ale konstruktorami typów. 
+`Tree` i `Maybe` nie są typami, ale konstruktorami typów.
 
 Podobnie, w tym kontekście `[]` oznacza konstruktor typou list.
 
@@ -159,17 +159,20 @@ I podobnie dla list ...
 
 ``` haskell
 allOnes :: Functor t => t a -> t Char
-allOnes t = fmap (const '1') ts
+allOnes t = fmap (const '1') t
 ```
 
 ale można krócej:
 
-```
+``` haskell
 allOnes t = '1' <$ t
 -- (<$) = fmap . const
 
-ghci> '1' <$ "abc" 
-"111"
+-- >>> '1' <$ "abc"
+-- "111"
+
+-- >>> allOnes $ Node 2 (Node 1 Empty Empty) (Node 3 Empty Empty)
+-- Node '1' (Node '1' Empty Empty) (Node '1' Empty Empty)
 ```
 
 ## Applicative
@@ -207,14 +210,14 @@ ghci> :t (+) <$> (Just 5::Maybe Int)
 (+) <$> (Just 5::Maybe Int) :: Maybe (Int -> Int)
 ```
 
-Potrzebujemy albo funkcji 
+Potrzebujemy albo funkcji
 
 ``` haskell
 fmap2 :: (a -> b ->c) -> Maybe a -> Maybe b -> Maybe c
 ```
 (tudzież `fmap3,fmap4`, itd.) ...albo funkcji:
 
-``` haskell 
+``` haskell
 apply :: Maybe (a -> b) -> Maybe a -> Maybe b
 ```
 wtedy
@@ -284,7 +287,7 @@ instance Applicative Maybe where
     -- (<*>) :: Maybe (a -> b) -> Maybe a -> Maybe b
     Just g <*> Just x = Just (g x)
     _      <*> _      = Nothing
-    
+
 ```
 
 
@@ -338,7 +341,7 @@ zdefiniowanych w klasie **Applicative** jako
 (*>) :: Applicative f => f a -> f b -> f b
 a1 *> a2 = (id <$ a1) <*> a2
 -- essentially the same as liftA2 (flip const), but if the Functor instance has an optimized (<$)
--- it may be better to use that instead. 
+-- it may be better to use that instead.
 
 (<*) :: f a -> f b -> f a
 (<*) = liftA2 const
@@ -450,7 +453,7 @@ x <*> (y <*> z) = (pure (.) <*> x <*> y) <*> z   -- composition
 Te prawa nie są tak groźne jak wyglądają:
 
 1. Pierwsze znamy już dla `fmap` (`pure id <*> x = fmap id x = x`)
-2. Drugie mówi że `pure` zachowuje aplikację 
+2. Drugie mówi że `pure` zachowuje aplikację
 3. Trzecie mówi, że obliczenia czyste można wykonać przed albo po obliczeniu z efektami
 4. Czwarte to łączność dla `<*>` (z poprawką na asymetrię)
 
@@ -522,7 +525,7 @@ class Semigroup a => Monoid a where
 instance Semigroup [a] where
   (<>) = ( ++ )
 
-newtype Sum a = Sum {getSum :: a}   
+newtype Sum a = Sum {getSum :: a}
 instance Num n => Semigroup (Sum n) where
   Sum x <> Sum y = Sum (x + y)
 
@@ -608,7 +611,7 @@ data ETree a = Leaf a | Bin (ETree a) (ETree a) deriving (Show)
 instance Foldable ETree where
     fold (Leaf x) = x
     fold (Bin l r) = fold l <> fold r
-    
+
     foldMap f (Leaf x) = f x
     foldMap f (Bin l r) = foldMap f l <> foldMap f r
 ```
@@ -708,7 +711,7 @@ foldMap f = foldr (mappend . f) mempty
 -- f :: a -> b; mappend :: b -> (b -> b); mappend . f  :: a -> b -> b; mempty :: b
 
 foldr :: (a -> b -> b) -> b -> t a -> b
-foldr f z t = appEndo (foldMap (Endo . f) t) z 
+foldr f z t = appEndo (foldMap (Endo . f) t) z
 ```
 
 Implementacja `foldr` wykorzystuje monoid `Endo`:
@@ -734,7 +737,7 @@ map g [] = []
 map g (x:xs) = (:) (g x) (map g xs)
 ```
 
-Załóżmy teraz, że użycie `g` może się nie powieść (wynikiem jest Maybe). 
+Załóżmy teraz, że użycie `g` może się nie powieść (wynikiem jest Maybe).
 Możemy sobie poradzić korzystając z `Applicative`:
 
 ```haskell
@@ -784,7 +787,7 @@ instance Traversable ETree where
     traverse :: Applicative f => (a -> f b) -> ETree a -> f (ETree b)
     traverse f (Leaf x) = Leaf <$> f x
     traverse f (Bin l r) = Bin <$> traverse f l <*> traverse f r
- 
+
     sequenceA :: Applicative f => ETree (f a) -> f (ETree a)
     sequenceA (Leaf x) = Leaf <$> x
     sequenceA (Bin l r) = Bin <$> sequenceA l <*> sequenceA r
@@ -896,10 +899,10 @@ jest opis ścieżki od korzenia zawierający kierunki ruchu<br/>oraz mijane po d
 
 ``` haskell
 data Dir = DL | DR deriving (Show, Eq)
-type Path a = [(Dir, Tree a)] 
+type Path a = [(Dir, Tree a)]
 type Foc a = (Tree a, Path a)
 ```
-Podstawowanica polega na tym, że suwak przechowuje ścieżkę w odwrotnej kolejności, so usprawnia nawigację.
+Podstawowa różnica polega na tym, że suwak przechowuje ścieżkę w odwrotnej kolejności, so usprawnia nawigację.
 
 Napisz funkcje przekształcające pomiedzy tymi reprezentacjami
 
@@ -956,4 +959,3 @@ fmap fmap fmap = fmap . fmap
 ghci>  fmap fmap fmap negate (+) 2 3
 -5
 ```
-
