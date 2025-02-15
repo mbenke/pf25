@@ -73,25 +73,34 @@ Użycie `<*>` też nie pomoże (sprawdź!) - mamy dostep do wyniku pierwszego ob
 instance Monad Maybe where
   (Just a) >= k = k a
   Nothing >= _ = Nothing
-
-instance Monad [] where
-  -- (>>=) :: [a] -> (a -> [b]) -> [b]
-  xs >>= k = concatMap k xs
 ```
 
-Uwaga: skoro `(>>)` ignoruje wynik pierwszego obliczenia, kuszace może być zdefiniowanie `xs >> ys = ys`, ale tak nie można:<br/>
- trzeba zachować **efekt** pierwszego obliczenia - w tym wypadku **liczbę** wyników:
+### Wyrażenia z dzieleniem
 
 ``` haskell
-ghci> "a" >> "b"
-"b"
-ghci> "xy" >> "b"
-"bb"
-ghci> "" >> "b"
-""
+data Exp = Val Int | Div Exp Exp
+
+safediv :: Int -> Int -> Maybe Int
+safediv _ 0 = Nothing
+safediv x y = Just (div x y)
+
+eval :: Exp -> Maybe Int
+eval (Val n) = pure n
+eval (Div x y) = case (eval x) of
+  Nothing -> Nothing
+  Just n -> case eval y of
+    Nothing -> Nothing
+    Just m -> safediv n m
+```
+mozna krócej:
+
+``` haskell
+eval (Div x y) = eval x >>= \n ->
+		 eval y >>= \m ->
+		 safediv n m
 ```
 
-### Komunikaty o błedach
+### Komunikaty o błędach
 
 Podobnie jak wcześniej, mozemy też użyc **Either**:
 
@@ -528,9 +537,9 @@ main = do
 
 Oczywiście należy używać z umiarem.
 
-### Przyomnienie: klasa **Alternative**
+### Przypomnienie: klasa **Alternative**
 
-Klasa **Alternative** opisuje obiczenia któr moga dać wiele (w tym zero!) wyników:
+Klasa **Alternative** opisuje obiczenia które moga dać wiele (w tym zero!) wyników:
 
 ``` haskell
 class Applicative f => Alternative f where
@@ -577,10 +586,22 @@ Listę możemy traktować jako monadę reprezentującą obliczenia niedeterminis
 ``` haskell
 instance Monad [] where
   return a = [a]
+  -- (>>=) :: [a] -> (a -> [b]) -> [b]
   m >>= f  = concatMap f m
-  fail s = []
 ```
 NB `[]` w nagłówku definicji oznacza konstruktor typu: `[] a = [a]`
+
+Uwaga: skoro `(>>)` ignoruje wynik pierwszego obliczenia, kuszace może być zdefiniowanie `xs >> ys = ys`, ale tak nie można:<br/>
+ trzeba zachować **efekt** pierwszego obliczenia - w tym wypadku **liczbę** wyników:
+
+``` haskell
+ghci> "a" >> "b"
+"b"
+ghci> "xy" >> "b"
+"bb"
+ghci> "" >> "b"
+""
+```
 
 
 ### Instancja **MonadPlus**
@@ -592,6 +613,8 @@ instance MonadPlus [] where
   mzero = []
   mplus = (++)
 ```
+
+Można rozważać inne implementacje `mplus` (ćwiczenie)
 
 ### Przykład --- odcinki początkowe
 

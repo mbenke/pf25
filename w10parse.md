@@ -361,3 +361,125 @@ natural = lexeme nat
 ## Biblioteki  - kombinatory parsujące
 
 parsec, megaparsec
+
+
+## Rodzaje (kinds)
+
+* Value operations are described by their types
+
+* Type operations are described by their kinds
+
+* Types (e.g.. `Int`, `Int -> Bool`) are of kind `*`
+
+* One argument constructors are of type  (e.g.. `Tree`) are of kind `* -> *`
+
+    ~~~~ {.haskell}
+    {-#LANGUAGE KindSignatures, ExplicitForAll #-}
+
+    class Functor f => Pointed (f :: * -> *) where
+        pure :: forall (a :: *).a -> f a
+    ~~~~
+
+* More complex kinds are possible, e.g. for monad transformers:
+
+    ~~~~ {.haskell}
+    class MonadTrans (t :: (* -> *) -> * -> *) where
+        lift :: Monad (m :: * -> *) => forall (a :: *).m a -> t m a
+    ~~~~
+
+NB spaces are obligatory - `::*->*` is one lexem
+
+Also note recent trend of using `Type` (imported from `Data.Kind`)instead of `*`:
+
+## Jeszcze o łączeniu monad
+
+Czemu musimy mieć osobny transformator do każdegho rodzaju efektu, zamiast ogólnego schematu?
+
+Dla dowolnych funktorów, ich złożenie jest też funktorem
+``` haskell
+{-# LANGUAGE ScopedTypeVariables #-}
+
+gfmap :: forall f g a b. (Functor g, Functor f)
+         => (a -> b) -> g(f(a)) -> g(f(b))
+gfmap fun a = mapG (mapF fun) a where
+  mapF :: (a -> b) -> f a -> f b
+  mapG :: (f a -> f b) -> g (f a) -> g (f b)
+  mapF = fmap
+  mapG = fmap
+```
+
+NB rozszerzenie `ScopedTypeVariables` jest potrzebne tylko żeby dać sygnatury typów dla `mapF` i `mapG`
+
+### Łączenie Applicative
+
+Składanie Applicative jest trudniejsze, ale możliwe, w przybliżeniu
+
+``` haskell
+apF :: F (a -> b) -> F a -> F b
+apG :: G (c -> d) -> G c -> G d
+
+apGF            :: G(F(a -> b)) -> G(F a) -> G(F b)
+apGF            = apG . fmapG(apF)
+
+fmapG(apF) :: G(F(a -> b)) -> G(F a -> F b)
+       apG :: G (F a -> F b)  ->  G(F a) ->  G(F b)
+
+apGF            :: G(F(a -> b)) -> G(F a) -> G(F b)
+apG . fmapG(apF) :: G(F(a -> b)) -> G(F a) -> G(F b)
+```
+
+### Łączenie monad
+
+Nie istnieje ogólny przepis na składanie monad.
+
+Łatwo to zobaczyć dla alternatywnej prezentacji monad:
+
+``` haskell
+class Applicative m => Monad' m where
+  join :: m(m a) -> m a
+--  m >>= f = join(fmap f m)
+--  join mma = mma >>= id
+
+joinMN ::(Monad' m, Monad' n)=> m(n(m(n a))) -> m(n a)
+```
+
+Potrzebowalibyśmy
+
+```
+swapNM :: n(m a) -> m(n a)
+```
+
+### Drzewa jako monady (1)
+
+Równowazność `>>=` i `join` możemy wykorzystać dla zdefiniowania instancji `Monad` dla drzew
+
+Dla drzew z wartościoami w liściach jest łatwo:
+
+``` haskell
+joinT :: ETree(ETree a) -> ETree a
+joinT (Tip t) = t
+joinT (Bin l r) = Bin (joinT l) (joinT r)
+
+instance Monad ETree where
+    m >>= f = joinT (fmap f m)
+```
+
+### Drzewa jako monady (2)
+
+Dla drzew z wartościami w wierzchołkach wewnętrznych jest trochę trudniej, ale da się:
+
+``` haskell
+instance Semigroup (Tree a) where
+instance Monoid (Tree a) where
+-- było jako ćwiczenie
+
+joinT :: Tree(Tree a) -> Tree a
+-- joinT Empty = Empty
+-- joinT (Node t l r) = joinT l <> t <> joinT r
+joinT = foldMap id
+
+instance Monad Tree where
+  -- ta >>= k = joinT (fmap k ta)
+  -- ta >>= k = foldMap k ta
+  (>>=) = flip foldMap
+```
