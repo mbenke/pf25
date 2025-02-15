@@ -102,16 +102,3 @@ type Pat = Name
 ```
 
 napisz instancje `Show` dla `Def` i `Expr` (nawiasy!)
-type Subst = [(Name, Expr)]
-applySubst :: Subst -> Expr -> Expr
-``` haskell
-subst :: (Name, Expr) -> Expr -> Expr
-type Subst = [(Name, Expr)]
-applySubst :: Subst -> Expr -> Expr
-
-type DefMap = [(Name, Def)]
-buildDefMap :: Prog -> DefMap
-
-rstep :: DefMap -> Expr -> Maybe Expr
-rpath :: DefMap -> Expr -> [Expr]
-```
