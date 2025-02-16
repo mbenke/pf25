@@ -41,6 +41,7 @@ Wypróbuj funkcje
 - take, drop
 - replicate
 - length, null
+- reverse
 - uncons, unsnoc (wymaga `import Data.List`)
 - intercalate, intersperse (można na napisach)
 
@@ -56,8 +57,26 @@ and :: [Bool] -> Bool
 Spróbuj stworzyć ich własne implementacje. Możesz dać im własne nazwy lub ukryć standardowe wersje:
 
 ``` haskell
-import Prelude hiding(head,tail,last,init,take,drop,replicate,length,null)
+import Prelude hiding(head,tail,last,init,take,drop,replicate,reverse,length,null)
 ```
+
+## Łączenie i sortowanie
+
+Napisz funkcję `fair`, która połączy dwie listy wybierając na przemian po jednym elemencie z każdej, np.
+
+``` haskell
+-- >>> fair [1,2,3,4] [55,77]
+-- [1,55,2,77,3,4]
+```
+
+Napisz funkcję `merge :: Ord a => [a] -> [a] -> [a]` która połączy dwie listy uporządkowane rosnąco w jedną tak uporządkowaną, np
+
+``` haskell
+-- >>> merge [2,5,6] [1,3]
+-- [1,2,3,5,6]
+```
+
+Używając powyższej funkcji, napisz mergesort.
 
 
 ## zip - ćwiczenia
@@ -79,6 +98,7 @@ ghci> positions 'a' "alamakota"
 
 Teraz napisz funkcję `position` która daje pierwszą pozycję lub (-1) gdy nie ma wystąpień.
 
+
 ## foldr & friends
 
 a. Napisz funkcje
@@ -92,8 +112,8 @@ która zwiększy o 1 każdy element każdego elementu swojego argumentu, np
 ```
 b. Napisz przy pomocy foldl/foldr
 
-*   silnię
-*   `concat :: [[a]] -> [a]`
+* silnię
+* `concat :: [[a]] -> [a]`
 * `maximum :: [Int] -> Int`
 * `minimum :: [Int] -> Int`
 * uogólnij dwie powyższe przy uzyciu `winner :: (a -> a -> a) -> [a] -> a`
