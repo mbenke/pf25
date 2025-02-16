@@ -36,7 +36,7 @@ Chociaż programowanie funkcyjna stało się na szerszą skalę popularne dopier
 
 W 1928, jako kontyuację swego słynnego programu, David Hilbert wysunął następujący problem:
 
- > Czy istnieje algorytm, który potrafi odpowiedzieć, 
+ > Czy istnieje algorytm, który potrafi odpowiedzieć,
  > czy dana formuła logiczna (pierwszego rzędu) jest prawdziwa?
 
 Aby odpowiedzieć na to pytanie, potrzebna jest formalizacja pojęcia "algorytmu"
@@ -146,7 +146,7 @@ $$2 + 1 = \lambda f x.2 f(1 f x) = \lambda f x.2 f (f x) =
 
 $$(2 + 1)\ s\ z = 2\ s(1\ s\ z) = 2\ s(s\;z) =s(s(s\; z))  = 3 s\; z$$
 
-Mnożenie: $$(m * n)\ f\ x = m (n\ f) x$$ 
+Mnożenie: $$(m * n)\ f\ x = m (n\ f) x$$
 (na marginesie: $m*n = m\circ n$, gdzie $\circ$ oznacza złożenie funkcji )
 
 $$3 * 2 = \lambda s\, z.3(2 s) z = 6$$
@@ -161,14 +161,14 @@ W efekcie możemy zdefiniować każdą funkcję obliczalną.
 
 
 
-## Kombinatory 
+## Kombinatory
 
 Kombinator to funkcja, która "kombinuje" swoje argumenty, np.
 
 ``` haskell
 I x = x
 two f x = f(f x)
-add m n f x = m f (n f x) 
+add m n f x = m f (n f x)
 ```
 
 <!-- Z kolei `four = add two two` jest kombinatorem o ile `add` i `two` potraktować jako stałe (zostały wcześniej zdefiniowane). -->
@@ -252,7 +252,7 @@ W programowaniu imperatywnym, tak jak i w maszynach Turinga i von Neumanna, cent
 
 W programowaniu funkcyjnym, centralnym pojęciem jest wyrażenie, opisujące pewną wartość.
 
-Wyrażenia mogą zawierać nazwy dla wartości, potocznie nazywane zmiennymi. 
+Wyrażenia mogą zawierać nazwy dla wartości, potocznie nazywane zmiennymi.
 <br/>Słowo zmienna jest tu użyte w znaczeniu matematycznym (jak "funkcja jednej zmiennej"),
 <br/>a nie znanej z programowania imperatywnego (jak "zwiększ wartość zmiennej o 1").
 
@@ -299,7 +299,7 @@ Leniwy (nierychliwy)
 
 - Wyrażenia nie są obliczane wcześniej niż potrzeba
 - Umożliwia programowanie z (potencjalnie) nieskończonymi strukturami
-- Daje pełną kompozycjonalność 
+- Daje pełną kompozycjonalność
 
 Zaprojektowany w latach 1990-tych, od tego czasu do dziś intensywnie rozwijany<br />
  (Haskell Report 1.0 1990; Haskell 98 - 2002;  Haskell 2010; oraz de facto GHC2021; GHC2024)
@@ -340,7 +340,7 @@ ghci> square 3
 Program, który zawiera funkcję `main` możemy skompilować do pliku wykonalnego:
 
 ``` shell
-$ cat answer.hs 
+$ cat answer.hs
 main = print 42
 
 $ ghc answer.hs
@@ -362,17 +362,17 @@ Przykład benchmarku (benchmarksgame-team.pages.debian.net)
 ```
 binary-trees
 source 	       secs 	 mem 	    gz 	cpu secs
-Rust #5        1.09 	198,720 	771   3.84 	
-C clang #2     1.66 	170,236 	816   5.36 
+Rust #5        1.09 	198,720 	771   3.84
+C clang #2     1.66 	170,236 	816   5.36
 Haskell GHC #4 2.06 	271,032 	807   5.24
 Java  #7       2.62   1,803,192 	841   8.14
 Node.js #6     8.60   1,250,816 	752  30.68
-Go #2         14.17 	624,780 	672  56.29 	
+Go #2         14.17 	624,780 	672  56.29
 Swift #4      17.49 	707,456 	772  55.84
 Python 3 #4   33.61 	276,992 	481 121.96
 ```
 
-Czy Haskell jest wolniejszy niz Java/Python? 
+Czy Haskell jest wolniejszy niz Java/Python?
 
 NIE, zwykle jest szybszy :)
 
@@ -397,12 +397,12 @@ Haskell jest oczywiście zupełnie inny niż np. Java, ale przekonamy się, ze n
 > The lambda expression is a prvalue expression of unique unnamed non-union non-aggregate class type, known as closure type, which is declared (for the purposes of ADL) in the smallest [...] scope that contains the lambda expression.
 
 > a prvalue is an expression whose evaluation
-computes the value of an operand of a built-in operator, or initializes an object 
+computes the value of an operand of a built-in operator, or initializes an object
 [cppreference.com]
 
 ## Użycie funkcji
 
-Podstawową rzeczą, którą możey zrobić z funkcją, 
+Podstawową rzeczą, którą możey zrobić z funkcją,
 jest wyznaczenie jej wartości dla danych argumentów;<br/>
 mówimy wtedy o aplikacji (zastosowaniu) funkcji do argumentów.
 
@@ -455,7 +455,7 @@ może też zawierać definicje pomocnicze
 ``` haskell
 f x y | x < a     = x + a
       | otherwise = x - a       -- warunki są sprawdzane kolejno, pierwszy prawdziwy wygrywa
-      where 
+      where
         a = square(y+1)
         square x = x * x
 ```
@@ -468,7 +468,7 @@ Definicje mogą być rekurencyjne
 
 ``` haskell
 fact n | n <= 1 = 1
-       | n >  1 =  n * fact(n-1) 
+       | n >  1 =  n * fact(n-1)
 ```
 W programowaniu funkcyjnym rekurencja jest podstawowym mechanizmem sterowania (nie ma instrukcji, zatem nie ma `while`).
 
@@ -480,7 +480,7 @@ Obliczenie wartości wyrażenia polega na redukowaniu (upraszczaniu) wyrażenia 
 Spójrzmy na wyrażenie `square(3+4)`; jedna z możliwych redukcji
 
 ```
-square (3+4) = { + }  
+square (3+4) = { + }
 square 7     = { square }
 7 * 7        = { * }
 49
@@ -488,7 +488,7 @@ square 7     = { square }
 Wyrażenie "49" nie da się zredukować - jest ono wartością (jest w postaci normalnej).
 
 ## Kolejność ewaluacji
-Dla większości wyrażeń 
+Dla większości wyrażeń
 możliwe są różne kolejności obliczeń.
 
  Inną możliwością obliczenia `square(3+4)` jest
@@ -500,7 +500,7 @@ square (3+4)  = { square }
 ```
 
 Większość języków oblicza wartości argumentów przed przekazaniem ich do funkcji; <br />
-kolejność obliczania składowych wyrażenia może mieć wpływ na jego wartość. 
+kolejność obliczania składowych wyrażenia może mieć wpływ na jego wartość.
 
 W Haskellu (przejrzystość!), jeśli dwie kolejności obliczeń prowadzą do wyniku, <br /> to dadzą ten sam wynik.
 
@@ -536,7 +536,7 @@ Dokładniej, wartością wyrażenia jest $\bot$,<br />
 
 W Haskellu taką wartość mają np
 
-```
+``` haskell
 bottom1 = undefined
 bottom2 = error "some message"
 bottom3 = bottom3
@@ -553,12 +553,12 @@ W wypadku funkcji wieloargumentowej możemy mówić, ze funkcja jest rygorystycz
 
 Rozważmy na przykład funkcje
 
-```
+``` haskell
 id x = x
 const x y = x
 ```
 
-Funkcja `id` jest rygorystyczna. 
+Funkcja `id` jest rygorystyczna.
 
 Funkcja `const` jest rygorystyczna dla pierwszego argumentu, ale pobłażliwa dla drugiego:
 
@@ -568,7 +568,7 @@ const undefined y = undefined
 const x undefined = x
 ```
 
-Nie jest jednak w pełni rygorystyczna: 
+Nie jest jednak w pełni rygorystyczna:
 $\quad const(\bot) = \lambda y.\bot \neq \bot$
 
 Gorliwa (eager) ewaluacja (najpierw argumenty) daje funkcje pedantyczne.<br/>
@@ -598,7 +598,7 @@ ghci> ['a'..'h']
 Na laboratorium poznamy funkcje na listach takie, jak:
 
 ```
-(++),  take,  drop,  concat, 
+(++),  take,  drop,  concat,
 ```
 
 
@@ -659,12 +659,12 @@ ghci> :type +d (+)
 ```
 
 ## Typy funkcji
-Argumenty do funkcji przekazujemy "po jednym", 
+Argumenty do funkcji przekazujemy "po jednym",
 na przykład `mn x y`.
 
 Znajduje to odbicie w typach funkcyjnych
 ```haskell
-mn :: Int -> Int -> Int   
+mn :: Int -> Int -> Int
 ```
 
 Typ `Int -> Int -> Int` jest równoważny `Int -> (Int -> Int)` <br />
@@ -672,7 +672,7 @@ i oznacza funkcję, która dostawszy argument typu `Int` daje w wyniku funkcję 
 
 Z kolei `(Int -> Int) -> Int` to typ funkcji, której argumentami są funkcje `Int -> Int`.
 
-Analogicznie `mn x y` jest równoważne `(mn x) y` 
+Analogicznie `mn x y` jest równoważne `(mn x) y`
 ale czym innym niż `mn(x y)`!
 
 Tym niemniej potocznie mówimy że funkcja jest n-argumentowa".<br/>
@@ -682,7 +682,7 @@ W rzeczywistosci redukcja aplikacji odbywa się tylko gdy jest odpowiednia liczb
 ## Typy polimorficzne
 
 Niektóre funkcje mogą działać dla argumentów różnych typów - czyli mogą mieć więcej niż jeden typ; na przykład identyczność
- 
+
 ``` haskell
 id x = x
 ```
@@ -698,7 +698,7 @@ Należy to rozumieć tak, że identyczność ma typ `a -> a` dla dowolnego typu 
 
 Wartość nieokreślona i błąd są dowolnego typu:
 
-```
+``` haskell
 undefined :: a
 error :: String -> a
 ```
@@ -710,10 +710,20 @@ Możemy definiować własne typy danych, np.:
 - `data ExitCode = ExitSuccess | ExitFailure Int`
 
 Typy mogą być rekurencyjne
+
 - `data Nat = Zero | Succ Nat`
+
 ... i polimorficzne
+
 - `data Maybe a = Nothing | Just a`
 - `data Tree a = Empty | Node a (Tree a) (Tree a)`
+
+Funkcje operujące na takich typach możemy definiować przez przypadki (dopasowanie wzorca)
+
+``` haskell
+add m Zero = m
+add m (S n) = S (add m n)
+```
 
 Typom poświęcony będzie następny wykład.
 
@@ -728,7 +738,7 @@ W Haskellu jest to zrealizowane przy pomocy *klas typów*<br/>
 (+) :: Num a => a -> a -> a
 ```
 
-Rozumiemy to tak, że dodawanie jest przeciążone 
+Rozumiemy to tak, że dodawanie jest przeciążone
 i ma typ `a -> a -> a`
 dla dowolnego typu `a` należacego do klasy `Num`<br/>
 (czyli realizującego interfejs `Num`).
@@ -791,14 +801,47 @@ main = k (print "foo") (print "bar")
 8. Klasy 2: Functor, Applicative, Foldable, Traversable
 9. Monady
 10. Kombinatory parsujące
-11. Testowanie
-12. Tour de force: soczewki (Costate Comonad Coalgebra...)
-13. Elementy funkcyjne w innych językach
+11. Wnioskowanie o programach
+12. Testowanie
+13. Tour de force: soczewki (Costate Comonad Coalgebra...)
 
-## Zasady zaliczania FIXME
+## Laboratorium
 
-- trzy zadania zaliczeniowe
-  * T2-T3 kombinatory 
-  * T5-T8 definiowane kombinatory 
-  * T9-T14 dopasowania 
-- egzamin ustny, którego istotną częścią jest prezentacja zadań:
+Celem laboratorium jest przećwiczenie koncepcji z wykładu pod kierunkiem prowadzącego,<br/>
+wyjaśnienie niejasności (oraz oczywiście eksperymentowanie).
+
+Częściowo w formule "reverse classroom": do wielu tematów jest umyślnie więcej zadań niż da się zrobić w 90 minut;<br/>
+pozostałe należy zrobić we własnym zakresie,<br/>
+w razie problemów zwrócić się do prowadzącego na kolejnych zajęciach
+
+Tym niemniej nie należy traktować laboratorium tylko jak konsultacji;<br/>
+nieobecność utrudni zaliczenie przedmiotu.
+
+W ramach laboratorium także wyjaśnianie zadań zaliczeniowych.
+
+## Zasady zaliczania
+
+- trzy zadania zaliczeniowe - tekstowa wizualizacja procesu ewaluacji:
+  * T2-T3 (3-16.3) ustalone kombinatory  (S, K, ...)
+  * T4-T7 (17.3-14.4) kombinatory definiowane przez użytkownika (pico-Haskell)
+  * T8-T13 (14.4-8.6) toż + dopasowanie wzorca
+- zadania muszą być oddane przez moodle w wyznaczonych terminach
+- egzamin ustny, którego istotną częścią jest rozmowa (colloquium) na temat zadań:
+    * rozwiązania wszystkich zadań muszą być omówione z prowadzącym
+    * rozmowa jest osobno punktowana, może obejmować pytania sprawdzające wiedzę i umiejętności
+    * może odbyć się w trakcie jednego lub kilku spotkań
+    * uzyskanie oceny przed sesją jest możliwe przy prezentacji nie później niż na ostatnich zajęciach
+    * w trakcie sesji wyznaczony termin na prawach egzaminu ustnego
+    * podobnie termin w sesji poprawkowej
+
+Zadanie MUSI być rozwiązane samodzielnie. Wszelkie zapożyczenia muszą być wyraźnie zaznaczone z podaniem źródła. Dotyczy to także kodu wygenerowanego/zasugerowanego przez narządzia AI i pokrewne (VS Code, Copilot, ChatGPT, Claude itp.)
+
+Ponadto student musi umieć objaśnić sposób działania każdego fragmentu oddanego kodu
+
+## Punktacja
+
+- Zadanie 1: 5 punktów kod + 5 prezentacja; spóźnienie do 48h 1p, do 7 dni 2p, powyżej 3p
+- Zadanie 2: 10 + 10; spóźnienie do 48h 1p; do 7 dni 2p; powyżej 3p;
+- Zadanie 3: 15 + 15; spóźnienie do 24h 1p; do 48h 2p; do 7 dni 3p; powyżej 5p
+
+Skala ocen nie jest ustalona, ale 50% gwarantuje zaliczenie przedmiotu.
