@@ -557,13 +557,17 @@ głosi, że dla dowolnych `A, B` oraz funkcji `f :: A -> B` mamy
 
 $$ f\circ i = i\circ f $$
 
-czyli $i$ musi być identycznością (TODO: PROVE ME!)
+czyli $i$ musi być identycznością (*)
 
 Podobnie, dla `k :: a -> b -> a`
 
 $$ f(k\ x\ y) = k (f\ x)\ (g\ y) $$
 
 czyli `k x y = x`
+
+.
+
+Dowód (*): Przypuśćmy przeciwnie $i(a)=b \neq a$; jeśli $i(b)=b$ to niech $f(b)=a$, wpp niech $f(b)=b$ - sprzeczność.
 
 ### Równość (nie) dla wszystkich
 
