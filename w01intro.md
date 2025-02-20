@@ -860,7 +860,7 @@ W ramach laboratorium także wyjaśnianie zadań zaliczeniowych.
 
 - trzy zadania zaliczeniowe - tekstowa wizualizacja procesu ewaluacji:
   * T2-T3 (3-16.3) ustalone kombinatory  (S, K, ...)
-  * T4-T7 (17.3-14.4) kombinatory definiowane przez użytkownika (pico-Haskell)
+  * T4-T7 (17.3-13.4) kombinatory definiowane przez użytkownika (pico-Haskell)
   * T8-T13 (14.4-8.6) toż + dopasowanie wzorca
 - zadania muszą być oddane przez moodle w wyznaczonych terminach
 - egzamin ustny, którego istotną częścią jest rozmowa (colloquium) na temat zadań:
