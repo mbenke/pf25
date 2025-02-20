@@ -28,13 +28,13 @@ Oczywiście wymaga to zaangażowania i wysiłku.
 
 ## Trochę Historii
 
-Chociaż programowanie funkcyjna stało się na szerszą skalę popularne dopiero w tym stuleciu, to jego korzenie sięgają stu lat wstecz.
+Chociaż programowanie funkcyjna stało się na szerszą skalę popularne dopiero w tym stuleciu,<br/> to jego korzenie sięgają stu lat wstecz:
 
 - rachunek kombinatorów (funkcji): Schönfinkel 1924, Curry 1929
 - rachunek lambda (funkcji anonimowych): Church 1930
 - (można sięgnąć dalej, np. Frege 1893)
 
-W 1928, jako kontyuację swego słynnego programu, David Hilbert wysunął następujący problem:
+W 1928, jako kontynuację swego słynnego programu, David Hilbert wysunął następujący problem:
 
  > Czy istnieje algorytm, który potrafi odpowiedzieć,
  > czy dana formuła logiczna (pierwszego rzędu) jest prawdziwa?
@@ -51,19 +51,20 @@ i szerzej "obliczalności".
 
 Dlaczego wszyscy znają Turinga a mało kto Churcha?
 
-Maszyna Turinga była bliska ówczesnemu rozumieniu maszyn liczących;
-
-Łatwiej ją zrozumieć na niskim poziomie (poszczególnych kroków).
+- Maszyna Turinga była bliska ówczesnemu rozumieniu maszyn liczących;
+- maszynę w której krok obliczenia modyfikuje komórkę pamięci łatwo zrealizowac sprzętowo.
+- Łatwiej ją też zrozumieć na niskim poziomie (poszczególnych kroków);
+- trudniej jednak ogarnąć w całości jak działa dana maszyna.
 
 ### Maszyna Turinga
 
-$M= \langle Q, \Gamma, b,\Sigma, \delta, q_0, F \rangle$
+$M= \langle Q, \Gamma, B, \delta, q_0, F \rangle$
 gdzie:
 
 - Q jest zbiorem stanów
 - $\Gamma$ jest alfabetem taśmowym
-- $b\in \Gamma$ to wyróżniony symbol pusty
-- $\Sigma\subseteq\Gamma\setminus \{b\}$ to alfabet wejściowy
+- $B\in \Gamma$ to wyróżniony symbol pusty
+<!-- - $\Sigma\subseteq\Gamma\setminus \{B\}$ to alfabet wejściowy -->
 - $q_0$ to stan poczatkowy
 - $\delta: Q\times\Gamma\to Q\times\Gamma\times\{L,R\}$ to funkcja przejścia<br/>
      w zależności od bieżącego stanu i symbolu na taśmie określa nowy stan i symbol oraz w którą stronę przesuwa się głowica.
@@ -72,13 +73,20 @@ gdzie:
 
 Reprezentacja: liczby są zapisane w postaci ciągu jedynek rozdzielonych 0
 
-Wejście: $1^m01^n$
+Wejście: $B1^m01^nB$
 
-Wyjście: $1^{m+n}$
+Wyjście: $B1^{m+n}BB$
 
 ![MT dla dodawania](https://scanftree.com/automata/images/turing_machine/turing_machine_state_diagram_for_adder.png)
 
 Ćwiczenie: stwórz maszynę dla mnożenia.
+
+### Mnożenie - Maszyna Turinga
+
+
+Wejście: $B0^mC0^nB$; Wyjście: $B0^{m*n}B$
+
+![](https://media.geeksforgeeks.org/wp-content/uploads/2222-1.png)
 
 
 ### Zagadka
@@ -110,6 +118,22 @@ Co zrobi ta maszyna na pustej taśmie (same 0)?
 
 Wskazówka: 10^^15
 
+## Problem z maszyną Turinga
+
+Maszyna Turinga działa na bardzo niskim poziomie.
+
+Kierunki rozwiązań:
+
+- von Neumann/Princeton: na podobnej zasadzie ale wyższym poziomie
+    - arytmetyka binarna
+    - rejestry i centralna jednostka arytmetyczna (ALU)
+    - pamięć przechowująca dane i instrukcje
+- Church: rachunek funkcji
+- hybrydowe:
+    - arytmetyka binarna (ALU)
+    - sterowanie funkcyjne
+    - tłumaczenie konstrukcji wysokiego poziomu na instrukcje niskiego
+
 ## Arytmetyka - rachunek funkcji
 
 Liczby naturalne: $$ n\ s\ z = s^n z $$
@@ -126,7 +150,7 @@ $$2 = \lambda s\ z.s(s\ z)$$
 Tekstowo:
 
 ``` haskell
-two = \s z-> s(s z)
+two = \s z -> s(s z)
 ```
 
 albo
@@ -154,7 +178,8 @@ $$2\;s = \lambda x.s(s x) $$
 
 Intuicja: $3(2\ f)$ to trzy grupy po 2 f w każdej.
 
-Idąc dalej tym tropem można zdefiniować potęgowanie, test na zero, rekurencję (iteracja jest zakodowana przez same liczby).<br/>
+Idąc dalej tym tropem można zdefiniować potęgowanie, test na zero,<br/>
+rekurencję (iteracja jest zakodowana przez same liczby).<br/>
 
 W efekcie możemy zdefiniować każdą funkcję obliczalną.
 
@@ -173,7 +198,7 @@ add m n f x = m f (n f x)
 
 <!-- Z kolei `four = add two two` jest kombinatorem o ile `add` i `two` potraktować jako stałe (zostały wcześniej zdefiniowane). -->
 
-Fundamentalną obserwacją Schönfinkela był, że każdy kombinator da się wyrazić przy pomocy dwóch bazowych:
+Fundamentalną obserwacją Schönfinkela było, że każdy kombinator da się wyrazić przy pomocy dwóch bazowych:
 
 ``` haskell
 S x y z = x z (y z)
@@ -218,7 +243,7 @@ Uwaga: trzeba pilnować zmiennych związanych przez $\lambda$ i w razie potrzeby
 
 $$ (\lambda y.x)[y/x] \stackrel{\alpha}{=} (\lambda z.x)[y/x] = \lambda z.y $$
 
-W Haskellu przeważają funkcje nazwane, ale możemy też uzywac anonimowych.
+W Haskellu przeważają funkcje nazwane, ale możemy też używać anonimowych.
 
 ## Programowanie całościowe
 Oczywiście tak w językach imperatywnych jak i funkcyjnych używamy arytmetyki maszynowej.<br />
@@ -253,7 +278,8 @@ W programowaniu imperatywnym, tak jak i w maszynach Turinga i von Neumanna, cent
 W programowaniu funkcyjnym, centralnym pojęciem jest wyrażenie, opisujące pewną wartość.
 
 Wyrażenia mogą zawierać nazwy dla wartości, potocznie nazywane zmiennymi.
-<br/>Słowo zmienna jest tu użyte w znaczeniu matematycznym (jak "funkcja jednej zmiennej"),
+
+Uwaga: słowo zmienna jest tu użyte w znaczeniu matematycznym (jak "funkcja jednej zmiennej"),
 <br/>a nie znanej z programowania imperatywnego (jak "zwiększ wartość zmiennej o 1").
 
 ### Zasada przejrzystości
@@ -419,7 +445,7 @@ zauważmy, że piszemy raczej `f x y` niż `f(x,y)` - później wyjaśnimy dlacz
 
 Oczywiście funkcje mogą być argumentami i wynikami innych funkcji.
 
-Funkcje są wartościami podobnie jak liczby, (w ogólności) nie możemy ich jednak wypisać.
+Funkcje są wartościami podobnie jak liczby, jednak (w ogólności) nie możemy ich jednak wypisać.
 
 ## Funkcje i definicje
 
@@ -659,8 +685,9 @@ ghci> :type +d (+)
 ```
 
 ## Typy funkcji
-Argumenty do funkcji przekazujemy "po jednym",
-na przykład `mn x y`.
+Argumenty do funkcji przekazujemy "po jednym", na przykład `mn x y`.<br/>
+W wyrażeniu `f(x,y)` argumentem funkcji `f` jest para `(x,y)`. <br/>
+Oczywiście krotki mogą być argumentami funkcji, ale pamiętajmy, że `f(x,y)` to nie to samo co `f x y`
 
 Znajduje to odbicie w typach funkcyjnych
 ```haskell
@@ -814,10 +841,20 @@ Częściowo w formule "reverse classroom": do wielu tematów jest umyślnie wię
 pozostałe należy zrobić we własnym zakresie,<br/>
 w razie problemów zwrócić się do prowadzącego na kolejnych zajęciach
 
+<!--
 Tym niemniej nie należy traktować laboratorium tylko jak konsultacji;<br/>
 nieobecność utrudni zaliczenie przedmiotu.
+-->
 
 W ramach laboratorium także wyjaśnianie zadań zaliczeniowych.
+
+## Materiały
+
+
+* Materiały na https://moodle.mimuw.edu.pl
+* Zadania oddajemy przez moodle (i omawiamy z prowadzącym)
+* Klucz dostępu `PF25g#0n` - gdzie n = numer grupy (np. `PF25g#09`)
+* Strona zapasowa https://github.com/mbenke/pf25
 
 ## Zasady zaliczania
 
