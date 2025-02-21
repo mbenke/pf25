@@ -321,7 +321,7 @@ Czysty język funkcyjny
 - Bez efektów ubocznych (ukrytych)
 - Ułatwia wnioskowanie o programach
 
-Leniwy (nierychliwy)
+Leniwy (pobłażliwy)
 
 - Wyrażenia nie są obliczane wcześniej niż potrzeba
 - Umożliwia programowanie z (potencjalnie) nieskończonymi strukturami
@@ -428,9 +428,9 @@ computes the value of an operand of a built-in operator, or initializes an objec
 
 ## Użycie funkcji
 
-Podstawową rzeczą, którą możey zrobić z funkcją,
+Podstawową rzeczą, którą możemy zrobić z funkcją,
 jest wyznaczenie jej wartości dla danych argumentów;<br/>
-mówimy wtedy o aplikacji (zastosowaniu) funkcji do argumentów.
+mówimy wtedy o zastosowaniu (aplikacji) funkcji do argumentów.
 
 (za chwilę przekonamy się dlaczego nie mówimy o wywołaniu funkcji).
 
@@ -480,7 +480,7 @@ może też zawierać definicje pomocnicze
 
 ``` haskell
 f x y | x < a     = x + a
-      | otherwise = x - a       -- warunki są sprawdzane kolejno, pierwszy prawdziwy wygrywa
+      | otherwise = x - a       -- warunki są sprawdzane kolejno, pierwszy spełniony wygrywa
       where
         a = square(y+1)
         square x = x * x
@@ -502,6 +502,10 @@ Definicje mogą być wzajemnie rekurencyjne, dlatego możemy je pisać w dowolne
 
 ## Obliczenia
 Obliczenie wartości wyrażenia polega na redukowaniu (upraszczaniu) wyrażenia aż do uzyskania postaci kanonicznej.
+
+```
+square x = x * x
+```
 
 Spójrzmy na wyrażenie `square(3+4)`; jedna z możliwych redukcji
 
