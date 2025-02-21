@@ -574,10 +574,9 @@ bottom3 = bottom3
 
 ## Funkcje rygorystyczne i pobłażliwe
 
-Jeśli $f(\bot) = \bot$, mówimy że funkcja $f$ jest *rygorystyczna*  albo *pedantyczna* (ang. *strict*)
+Jeśli $f(\bot) = \bot$, mówimy że funkcja $f$ jest *rygorystyczna*  albo *pedantyczna* (ang. *strict*).
 
-W przeciwnym wypadku mówimy, że jest *pobłażliwa*  (non-strict, lazy).
-
+W przeciwnym wypadku mówimy, że jest *pobłażliwa*  (ang. *non-strict*).
 
 W wypadku funkcji wieloargumentowej możemy mówić, ze funkcja jest rygorystyczna ze względu na któryś argument.
 
@@ -628,7 +627,7 @@ ghci> ['a'..'h']
 Na laboratorium poznamy funkcje na listach takie, jak:
 
 ```
-(++),  take,  drop,  concat,
+(++),  take,  drop,  concat, reverse, words, unwords, filter, ...
 ```
 
 
@@ -783,7 +782,36 @@ Także literały liczbowe są przeciążone
 
 Klasy typów omówimy dogłębnie na jednym z kolejnych wykładów.
 
-## Czystość
+## Przejrzystość
+
+Haskell jest językiem czystym, w którym obowiązuje zasada przejrzystości:
+* każde obliczenie wyrażenia daje ten sam wynik
+* zastąpienie wyrażenia innym wyrażeniem o tej samej wartości daje równoważny program
+
+Na przykład
+
+* `let x = 2 in x+x` jest równoważne `2+2`
+* `let f x = x + x in f 2` jest równoważne `2+2`
+* `let x = g 2 in x + x` jest równoważne `g 2 + g 2` dla dowolnej funkcji g (odpowiedniego typu).
+
+
+### Efekty uboczne
+Sytuacja komplikuje się w obecności efektów ubocznych, np. I/O.
+<br/>
+Powiedzmy, że mamy funkcję `readInt :: Handle -> Int` wczytującą liczbę ze strumienia (np. `stdin`). Czy
+
+```
+let x = readInt stdin in x+x
+```
+jest równoważne `readInt stdin + readInt stdin` ?
+
+Efekty uboczne są w konflikcie z zasadą przejrzystości.
+<br/>
+Różne języki rozwiązują to na różne sposoby, z reguły rezygnując z przejrzystości.
+<br/>
+W ML niektóre funkcje nie są przejrzyste. W C prawie żadne funkcje nie są przejrzyste.
+
+### Czystość jest bliska boskości
 W Haskellu przejrzystość jest zasadą nadrzędną, dlatego<br />
  **nie może** być funkcji takiej jak `readInt :: Handle -> Int`.<br />
 
