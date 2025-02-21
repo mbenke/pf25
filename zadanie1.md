@@ -124,7 +124,8 @@ I
 
 Ostatni przykład zasługuje na szczególną uwagę: musimy pamiętać, żeby redukować zawsze najbardziej zewnętrzny redeks - próba redukcji `S I I (S I I)` zaprowadzi nas na nieskończoną ścieżke.
 
-Z drugiej stron, jeśli dwie strategie redukci prowadzą do celu (postaci normalnej), to jest to ten sam cel (twierdzenie Churcha-Rossera).
+Z drugiej strony, jeśli dwie strategie redukcji prowadzą do celu (postaci normalnej),
+to jest to ten sam cel (twierdzenie Churcha-Rossera).
 
 ### Wskazówki
 
@@ -158,7 +159,8 @@ I (S I I) (I (S I I))
 
 Należy oddać jeden plik: `<uid>.hs` gdzie uid to identyfikator ze students. Na początku pliku musi się znajdować komentarz z danymi autora.
 
-W tym zadaniu korzystamy wylacznie ze standaru Haskell2010, bez żadnych rozszerzeń, w szczególności oddawany plik musi działać na `students`.
+W tym zadaniu korzystamy wylacznie ze standardu Haskell2010, bez żadnych rozszerzeń,
+w szczególności oddawany plik musi działać na `students`.
 
 Nie można importować żadnych modułów (poza domyślnie importowanym Prelude). 
 
