@@ -10,12 +10,15 @@ Przedmiotem zadania jest znowu stworzenie funkcji wizualizującej proces redukcj
 ``` haskell
 s x y z = x z (y z)
 k x y = x
-main = s k k x
+main = s k k t
 ------------------------------------------------------------
-s k k x
-k x (k x)
-x
+s k k t
+k t (k t)
+t
 ```
+
+Występujące w wyrażeniach identyfikatory, które nie są nazwami zdefiniowanego kombinatora ani argumentu
+(jak t w powyższym przykładzie), traktujemy jako stałe.
 
 ## Składnia
 
@@ -27,6 +30,8 @@ data Def = Def Name [Name] Expr
 data Expr = Var Name | Expr :$ Expr
 newtype Prog = Prog {progDefs :: [Def]}
 ```
+
+
 
 Zapoznaj się z dokumentacją [haskell-src](https://hackage.haskell.org/package/haskell-src) i napisz funkcje
 
@@ -124,6 +129,17 @@ k
 ```
 
 Najprostszym sposobem uniknięcia tego problemu jest przemianowanie parametrów formalnych tak, aby każdy z nich miał unikalną nazwę.
+
+## Poprawność programu
+
+W poprawnym programie:
+- każdy kombinator ma dokładnie jedną definicję
+- w definicji kombinatora argumenty mają różne nazwy (czyli np definicja `bad x y x = ...` jest niepoprawna).
+- jest definicja `main`, bez argumentów
+
+W podstawowej wersji można założyć, że działamy na poprawnych programach.
+Dla uzyskania lepszej punktacji można dodać sprawdzanie tych warunków i odrzucanie programów niepoprawnych
+ze stosownym komunikatem.
 
 ## Wymagania techniczne
 
