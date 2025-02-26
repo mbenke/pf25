@@ -35,7 +35,7 @@ czyli wyrażenie `S K K x` redukuje się (w dwóch krokach) do x.
 
 Podobnie w Haskellu używamy znaku równości, ale proces redukcji jest skierowany od lewej do prawej
 
-Przy użyciu kombinatorów S i K da się zdefinować wszystkie inne, ale dla ułatwienia uzywamy jeszcze dwóch pomocniczych:
+Przy użyciu kombinatorów S i K zasadniczo da się zdefinować wszystkie inne, ale dla ułatwienia uzywamy jeszcze dwóch pomocniczych:
 
 ```
 I x = x
@@ -87,7 +87,7 @@ ghci> prettyExpr (K :$ X :$ (V 7))
 
 ## Redukcja 
 
-Celem zadania jest stworzenie fukcji do wizualizacji procesu redukcji wyrażeń, na przykład
+Celem zadania jest stworzenie funkcji do wizualizacji procesu redukcji wyrażeń, na przykład
 
 ```
 ghci> printPath test1
