@@ -126,3 +126,19 @@ ghci> prettyExpr omega
 ghci> prettyExpr (K :$ X :$ (V 7))
 "K x v7"
 ```
+
+napisz funkcję `printExprs`, która wypisze listę wyrażeń, każde w osobnej linii, na przykład
+
+``` haskell
+-- >>> printExprs [test1, omega, test3]
+S K K x
+S I I (S I I)
+S B (S B I) x z
+```
+
+wskazówka: `putStrLn` wypisuje napis, np
+
+```
+putStrLn "hello"
+hello
+```
