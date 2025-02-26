@@ -19,18 +19,18 @@ x
 
 ## Składnia
 
-Korzystamy tylko z małego podzbioru skladni Haskella, nie ma typów.
+Korzystamy tylko z małego podzbioru skladni Haskella, nie ma typów - każda wartość może być zastosowana do dowolnych argumentów.
 Dzieki temu nie musimy pisać własnego parsera, ale możemy skorzystać z biblioteki `haskell-src`. Ta biblioteka buduje drzewo struktury dla pełnej składni Haskella, musimy je przekształcić do naszej uproszczonej składni
 
 ``` haskell
 data Def = Def Name [Name] Expr
-data Expr = Var Name | Expr :$ Expr | IntLit Integer
+data Expr = Var Name | Expr :$ Expr
 newtype Prog = Prog {progDefs :: [Def]}
 ```
 
-Zapoznaj się z dokumentacją [haskell-src](https://hackage.haskell.org/package/haskell-src) i napisz funkcje 
+Zapoznaj się z dokumentacją [haskell-src](https://hackage.haskell.org/package/haskell-src) i napisz funkcje
 
-``` haskell 
+``` haskell
 fromHsString :: String -> Prog
 fromParseResult :: ParseResult HsModule -> [Def]
 fromHsModule :: HsModule -> [Def]
@@ -53,6 +53,9 @@ Podobnie jak w poprzednim zadaniu, definiujemy funkcje `rstep` i `rpath` oblicza
 
 Jak poprzednio redeksem jest kombinator zaaplikowany do właściwej liczby argumentów (być może 0, np. `main`). Redukujemy w kolejnosci normalnej (od zewnątrz i od lewej)
 
+Przez kombinator będziemy rozumieć nazwę, która posiada definicję. Nazwy nie mające definicji będziemy traktować jako zmienne.
+
+
 
 ``` haskell
 one f z = f z
@@ -64,28 +67,28 @@ add m n f x = m f (n f x)
 mul m n = o m n
 fyr = add two two
 six = mul two tre
-main = six s 0
+main = six s z
 ------------------------------------------------------------
-six s 0
-mul two tre s 0
-o two tre s 0
-two (tre s) 0
-suc one (tre s) 0
-tre s (one (tre s) 0)
-suc two s (one (tre s) 0)
-s (two s (one (tre s) 0))
-s (suc one s (one (tre s) 0))
-s (s (one s (one (tre s) 0)))
-s (s (s (one (tre s) 0)))
-s (s (s (tre s 0)))
-s (s (s (suc two s 0)))
-s (s (s (s (two s 0))))
-s (s (s (s (suc one s 0))))
-s (s (s (s (s (one s 0)))))
-s (s (s (s (s (s 0)))))
+six s z
+mul two tre s z
+o two tre s z
+two (tre s) z
+suc one (tre s) z
+tre s (one (tre s) z)
+suc two s (one (tre s) z)
+s (two s (one (tre s) z))
+s (suc one s (one (tre s) z))
+s (s (one s (one (tre s) z)))
+s (s (s (one (tre s) z)))
+s (s (s (tre s z)))
+s (s (s (suc two s z)))
+s (s (s (s (two s z))))
+s (s (s (s (suc one s z))))
+s (s (s (s (s (one s z)))))
+s (s (s (s (s (s z)))))
 ```
 
-albo 
+albo
 
 
 ``` haskell
@@ -94,12 +97,12 @@ k x y = x
 i = s k k
 om x = x x
 omega = om om
-main = k i omega 0
+main = k i omega z
 ------------------------------------------------------------
-k i omega 0
-i 0
-s k k 0
-k 0 (k 0)
+k i omega z
+i z
+s k k z
+k z (k z)
 0
 ```
 
