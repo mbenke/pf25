@@ -35,7 +35,7 @@ czyli wyrażenie `S K K x` redukuje się (w dwóch krokach) do x.
 
 Podobnie w Haskellu używamy znaku równości, ale proces redukcji jest skierowany od lewej do prawej
 
-Przy użyciu kombinatorów S i K zasadniczo da się zdefinować wszystkie inne, ale dla ułatwienia uzywamy jeszcze dwóch pomocniczych:
+Przy użyciu kombinatorów S i K zasadniczo da się zdefiniować wszystkie inne, ale dla ułatwienia używamy jeszcze dwóch pomocniczych:
 
 ```
 I x = x
@@ -57,7 +57,7 @@ S :$ K :$ K
 
 ### Zmienne
 
-Uniwwersalną formą zmiennej jest `v_n` reprezentowane w naszym typie przez `(V n)`. Dla ułatwienia may też zmienne X i Z (Y pominięte dla uniknięcia nieporozumień).
+Uniwersalną formą zmiennej jest `v_n` reprezentowane w naszym typie przez `(V n)`. Dla ułatwienia mamy też zmienne X i Z (Y pominięte dla uniknięcia nieporozumień).
 
 ### Przykłady wyrażeń
 
@@ -159,7 +159,7 @@ I (S I I) (I (S I I))
 
 Należy oddać jeden plik: `<uid>.hs` gdzie uid to identyfikator ze students. Na początku pliku musi się znajdować komentarz z danymi autora.
 
-W tym zadaniu korzystamy wylacznie ze standardu Haskell2010, bez żadnych rozszerzeń,
+W tym zadaniu korzystamy wyłącznie ze standardu Haskell2010, bez żadnych rozszerzeń,
 w szczególności oddawany plik musi działać na `students`.
 
 Nie można importować żadnych modułów (poza domyślnie importowanym Prelude). 
