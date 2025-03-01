@@ -158,7 +158,7 @@ ghci> (+) 2 2
 
 Możemy też podać jeden z argumentów, uzyskamy wtedy funkcję jednoargumentową, np. `(+1) (*2) (1/)`.
 
-Wyjątek: `(-1)` oznacza liczbę ujemną, a nie funkcję.
+Wyjątek: `(-1)` oznacza liczbę ujemną, a nie funkcję. W razie potrzeby `(+(-1))` albo `\x->x-1` (lub `pred`)
 
 Identyfikator złożony z symboli (z wyjątkiem zastrzeżonych) domyślnie jest używany infiksowo.
 
@@ -173,6 +173,7 @@ Zbiór operatorów nie jest zamknięty; możemy definiować własne, np.
 
 ```
 x +++ y = (x+y)*(x+y+1) `div` 2
+(!=) = (/=)
 ```
 
 
@@ -220,6 +221,12 @@ if_then_else False t _ = t
 if_then_else True  _ e = e
 ```
 
+ale w języku mamy już konstrukcję `if then else`:
+
+``` haskell
+mn x y = if x < y then x else y
+```
+
 ### Definicje warunkowe
 
 Definicja może zawierać warunki (guards):
@@ -238,7 +245,8 @@ mn x y | x <  y    = x
        | otherwise = y
 ```
 
-Warunki sprawdzane są od góry do dołu, pierwszy spełniony wygrywa; w dobrym stylu jest jednak pisać warunki rozłączne.
+Warunki sprawdzane są od góry do dołu, pierwszy spełniony wygrywa;<br/>
+w dobrym stylu jest jednak pisać warunki rozłączne.
 
 ## Krotki
 
@@ -267,7 +275,7 @@ Najczęściej używaną wersją krotek są pary.
 
 Dostęp do elementów pary jet możliwy przy użyciu funkcji
 
-```
+``` haskell
 fst :: (a,b) -> a
 snd :: (a,b) -> b
 ```
