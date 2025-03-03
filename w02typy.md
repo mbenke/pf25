@@ -387,7 +387,7 @@ liczbie generatorów i filtrów, np.
 
 Większy przykład:
 ``` haskell
-[ (i,j,k) | i <- [0..(m `div` 3)], j <- [i..(m-i `div` 2)], let k = m - (i+j) ]
+f m = [ (i,j,k) | i <- [0..(m `div` 3)], j <- [i..(m-i `div` 2)], let k = m - (i+j) ]
 ```
 Do tematów związanych z listami będziemy wracać na kolejnych wykładach 
 
