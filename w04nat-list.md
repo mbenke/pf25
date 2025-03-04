@@ -1,6 +1,6 @@
 ---
 title: Programowanie Funkcyjne
-subtitle: Studium przypadku - liczby naturalne
+subtitle: Rekurencyjne type danych - Nat, listy
 author:  Marcin Benke
 date: Wykład 4, 17 marca 2025
 ---
@@ -26,14 +26,14 @@ Dla naszych celów wygodna będzie definicja liczb naturalnych wprowadzona przez
 data Nat = Zero | S Nat
 ```
 
-Definicja `data Nat` wprowadza typ danych `Nat` i jego konstruktory:
+Definicja **data Nat** wprowadza typ danych **Nat** i jego konstruktory:
 
 ``` haskell
 Zero :: Nat
 S :: Nat -> Nat
 ```
 
-Elementami typu `Nat` są wartości
+Elementami typu **Nat** są wartości
 
 ``` haskell
 Zero
@@ -61,7 +61,7 @@ Na przykład dla `add Zero (S (S Zero))` mamy
  = {- add.2 -}
    S(add Zero (S Zero))
  = {- add.2 -}
-   S(S(add Zero Zero)) 
+   S(S(add Zero Zero))
  = {- add.1 -}
    S(S Zero)
 ```
@@ -149,7 +149,7 @@ instance Ord Nat where
     compare (S _) Zero  = GT
     compare (S m) (S n) = compare m n
 ```
-### Num 
+### Num
 
 Zamiast `add (mul m n) n` wygodniej pisać `m*n + n`. W tym celu zdefiniujmy instancję klasy `Num`:
 
@@ -202,7 +202,7 @@ Spróbujmy teraz zdefiniować odejmowanie:
 
 ``` haskell
   m - Zero  = m
-  S m - S n = m - n           
+  S m - S n = m - n
 ```
 
 Zauważmy, że znów użwamy rekursji po obu argumentach,
@@ -283,9 +283,9 @@ add m (S n) = S(add m n)  -- add.2
 ```
 Spróbujemy teraz udowodnić, ze nasze dodawanie jest przemienne. Zaczniemy od dwóch prostych lematów:
 
-**Lemat 1** 
+**Lemat 1**
 
-$P(n) \equiv  Zero + n = n$ (to nie jest trywialne, bo  w `add` rekurencja po drugim argumencie). 
+$P(n) \equiv  Zero + n = n$ (to nie jest trywialne, bo  w `add` rekurencja po drugim argumencie).
 
 - $P(Zero) \equiv Zero + Zero = Zero$ - z pierwszego równania (`add.1`)
 
@@ -306,10 +306,10 @@ $S\ m + n = S(m + n)$
 
 Dowód przez indukcję po $n$:
 
-- krok podstawowy 
+- krok podstawowy
 ```
-   S m + Zero 
-=  { add.1 } 
+   S m + Zero
+=  { add.1 }
    S m
 =  { add.1 wspak }
    S (m + Zero)
@@ -350,61 +350,6 @@ Dowód przez indukcję po $n$:
 ```
 $\Box$
 
-### Pobudka
-
-To było tak rutynowe i nudne, że pewnie już wszyscy zasypiają.
-
-Zatem może postawmy mniej oczywiste pytania:
-
-- czy zawsze $\bot + n = n + \bot$ ?
-- czy zawsze $\bot \geq n = n \leq \bot$ ?
-- czy zawsze `infinity + n = n + infinity` ?
-
-Wrócimy do nich jeszcze przy omawianiu leniwej ewaluacji.
-
-Na razie jednak skupiamy się na wartościach właściwych.
-
-## Synteza programów
-
-Zobaczmy teraz, że poznane metody można wykorzystać także do syntezy programów na podstawie specyfikacji.
-
-Odejmowanie możemy wyspecyfikować jako odwrotność dodawania:
-
-```
-(m + n) - n = m
-```
-
-Przy pomocy indukcji skonstruujemy funkcję `(−)` dla tej specyfikacji:
-
-### Synteza odejmowania
-Specyfikacja: `(m + n) - n = m`
-
-- Przypadek podstawowy: `Zero`
-
-``` haskell
-  (m + Zero) - Zero = m
-  {- add.1 -}
-  m - Zero = m
-```
-
-to ostatnie równanie możemy przyjąć jako część definicji funkcji
-
-- Przypadek inukcyjny: `S n`
-``` haskell
-(m + S n) - S n = m
-{- add.2 -}
-S(m + n) - S n = n
-{- IH: (m + n) - n = m -}
-S (m + n) - S n = (m + n) - n
-```
-Oznaczając w ostatnim równaniu `m+n` przez `x` otrzymujemy
-
-``` haskell
-x - Zero = x
-S x - S n = x - n
-```
-
-czyli definicję odejmowania, którą widzieliśmy wcześniej.
 
 ## Iterator (funkcja fold)
 
@@ -428,11 +373,11 @@ Teraz mamy
 
 ``` haskell
 m + n = foldn S m n             -- krócej: (+) = foldn S
-m * n = foldn (+m) Zero n       
+m * n = foldn (+m) Zero n
 m ^ n = foldn (*m) (S Zero) n
 ```
 
-Zauwazmy też, że `fold S Zero = id`
+Zauważmy też, że `fold S Zero = id`
 
 ### Ciekawsze użycia fold
 
@@ -552,7 +497,7 @@ ghci> [1,2,1]<>[2,3]
 
 ghci> s = Set.fromList [1,2,1]
 ghci> t = Set.fromList [2,3]
-ghci> s <> t 
+ghci> s <> t
 fromList [1,2,3]
 ```
 
@@ -570,9 +515,16 @@ mozemy też użyć `mconcat` z klasy `Monoid`:
 ghci> :t mconcat
 mconcat :: Monoid a => [a] -> a
 
-ghci> mconcat [ [1,2], [3], [] ] 
+ghci> mconcat [ [1,2], [3], [] ]
 [1,2,3]
 ```
+
+``` haskell
+concat [] = []
+concat (xs:xss) = xs ++ concat xss
+```
+
+**Uwaga:** to jest (wykonywalna) specyfikacja, implementacja jest inna
 
 ### intersperse, intercalate
 
@@ -606,82 +558,13 @@ na marginesie: `concat = intercalate []`:
 ghci> intercalate [] [ [1,2], [3], [] ]
 [1,2,3]
 ```
-
-## Indukcja dla list
-
-Aby udowodnić, że własność `P` zachodzi dla wszystkich list, wystarczy pokazać:
-
-1. `P(⊥)`
-2. `P([])`
-3. Dla dowolnych `x` oraz `xs`, jeżeli `P(xs)` to `P(x:xs)`
-
-## Łączność konkatenacji
-
-Rozważmy następującą definicję konkatenacji
-
-``` haskell
-(++) :: [a] -> [a] -> [a]
-[]     ++ ys = ys
-(x:xs) ++ ys = x:(xs++ys)
-```
-
-Pokażemy teraz, że konkatenacja jest łączna oraz `[]` jest jej elementem neutralnym
-
-### Neutralność
-``` haskell
-(++) :: [a] -> [a] -> [a]
-[]     ++ ys = ys
-(x:xs) ++ ys = x:(xs++ys)
-```
-
-`[] ++ ys = ys` z definicji
-
-Pokażemy `xs ++ [] = xs` przez indukcję po `xs`:
-
-1. gdy `xs = ⊥` istotnie `⊥ ++ [] = ⊥` 
-2. `xs = []` - trywialnie z definicji `[] ++ [] = []`
-3. Krok indukcyjny, załóżmy  IH: `xs ++ [] = xs`, 
-wykażemy `(x:xs) ++ [] = x:xs`
-
-    ```
-    (x:xs) ++ []
-    = { ++.2 }
-    x:(xs++[])
-    = { IH }
-    x : xs
-    ```
-
-QED.
-
-### Łączność
-
-```
-(xs ++ ys) ++ zs = xs ++ (ys ++ zs)
-```
-
-Szkic kroku indukcyjnego: 
-
-```
-  ((x:xs) ++ ys) ++ zs
-=  { ++.2 }
-   (x:(xs ++ ys)) ++ zs
-=  { ++.2}
-    x:((xs ++ ys) ++ zs)
-=  { IH }
-    x:(xs ++ (ys ++ zs))
-=  { ++.2, symetria }
-    (x:xs) ++ (ys++ zs)
-```
-
-Szczegóły do uzupełnienia na ćwiczeniach.
-
 ## reverse
 
 Kolejną ważną funkcją jest `reverse`, która odwraca kolejność elementów.
 
-Jej naiwna implementacja
+Jej naiwna implementacja (wykonywalna specyfikacja)
 
-``` haskell 
+``` haskell
 reverse :: [a] -> [a]
 reverse [] = []
 reverse (x:xs) = reverse xs ++ [x]
@@ -689,14 +572,12 @@ reverse (x:xs) = reverse xs ++ [x]
 
 ma złożoność $O(n^2)$. Później wyprowadzimy lepszą wersję.
 
-Na razie udowodnijmy
+Własności:
 
 ```
 reverse(xs ++ ys) = reverse ys ++ reverse xs
 reverse(reverse xs) = xs
 ```
-
-(na ćwiczeniach?)
 
 ## head, tail, init, last
 
@@ -757,11 +638,9 @@ splitAt :: Int -> [a] -> ([a],[a])
 splitAt n xs           =  (take n xs, drop n xs)
 ```
 
-Udowodnić `take n xs ++ drop n xs = xs`
-
 Przypomnienie: to bardziej specyfikacje, prawdziwe implementacje są zoptymalizowane.
 
-Te funkcje działają dla wszystkich list (takze pustej i nieskończonych).
+Te funkcje działają dla wszystkich list (także pustej i nieskończonych).
 
 ```
 ghci> take 10 (init [1..])
@@ -809,9 +688,9 @@ map f (xs ++ ys) = map f xs ++ map f ys
 ```
 
 ```
-map f . tail = tail . map f
-map f . reverse = reverse . map f
-map f . concat = concat . map (map f)
+map f . tail = tail . map f             -- map.tail
+map f . reverse = reverse . map f       -- map.reverse
+map f . concat = concat . map (map f)   -- map.concat
 ```
 
 Ponadto dla rygorystycznych f
@@ -835,19 +714,18 @@ filter pred (x:xs)
 ```
 
 ``` haskell
-filter p . filter q = filter (p && q)
-filter p . concat = concat . map(filter p)
+filter p . filter q = filter (p && q)       -- filter.filter
+filter p . concat = concat . map(filter p)  -- filter.concat
 ```
 
-Udowodnij, że `filter p (xs ++ ys) = filter p xs ++ filter p ys`.
-Nie używaj indukcji.
+Udowodnimy, że `filter p (xs ++ ys) = filter p xs ++ filter p ys`.
 
 ``` haskell
-  filter p (xs ++ ys)
-= filter p (concat [xs, ys])
-= concat(map filter p [xs, ys])
-= concat[filter p xs, filter p ys]
-= filter p xs ++ filter p ys
+filter p (xs ++ ys) =               -- concat
+filter p (concat [xs, ys]) =        -- filter.concat
+concat(map filter p [xs, ys])       -- concat.map
+concat[filter p xs, filter p ys] =  -- concat
+filter p xs ++ filter p ys
 ```
 
 ### takeWhile, dropWhile
@@ -860,7 +738,7 @@ takeWhile :: (a -> Bool) -> [a] -> [a]
 
 Daje ona najdłuższy prefiks listy spełniający podany warunek.
 
-przykład - "świadkowie złożoności" 
+przykład - "świadkowie złożoności"
 
 ``` haskell
 compWitness n = [d | d <- cands, n `mod` d == 0] where
@@ -886,8 +764,9 @@ Następujące reguły objaśniają sposób ich tłumaczenia
 ``` haskell
 [e | x <- xs, Q] = concatMap f xs where f x = [e | Q]
 [e | p, Q] = if p then [e | Q] else []
+[e | let x = e', Q] = let x = e' in [e | Q]
 
-[e | x <- xs] = concatMap f xs where f x = [e] = map f xs where f x = e
+[e | x <- xs] = concatMap f xs where f x = [e]  -- = map f xs where f x = e
 [e | p] = if p then [e] else []
 
 concatMap f = concat . map f
@@ -902,30 +781,19 @@ Na przykład
 = concat [[1],[],[9],[],[25]]
 = [1,9,25]
 ```
+
+Nadal pamiętajmy, że to tylko specyfikacja
+
 ### Przykłady wycinanek
 
 ``` haskell
 [(i, j) | i <-[1..4], even i, j <- [i+1..4], odd j]
 [(2,3))]
 
-[(x,y,z) | x<-[1..n], y <-[x..n], z <- [y..n]]
-```
+trip n = [(x,y,z) | x<-[1..n], y <-[x..n], z <- [y..n]]
 
-### Własności wycinanek
+part3 m = [ (i,j,k) | i <- [0..(m `div` 3)], j <- [i..((m-i) `div` 2)], let k = m - (i+j) ]
 
-``` haskell
-[f x | x <- xs]      = map f xs
-[x | x <- xs, p x]   = filter p xs
-[f x | x <- xs, p x] = map f(filter p xs)
-
-[e | Q, P]           = concat [[e|P]|Q]
-[e | Q, x <- [d|P]]  = [e[x:=d]|Q,P]
-```
-
-Na przykład
-
-```
-  [x * x | x <- [1..5], odd x] = [x * x | x <- filter odd [1..5]] = [x*x|x<-1,3,5]
 ```
 
 ## zip
@@ -949,7 +817,7 @@ Prostym przykładem użycia `zip` jest iloczyn skalarny:
 
 ``` haskell
 sp :: Num a => [a] -> [a] -> a
-sp xs ys = sum(map times(zip xs ys)) 
+sp xs ys = sum(map times(zip xs ys))
          where times (x,y) = x * y
             -- times = uncurry (*)
 ```
@@ -1080,13 +948,13 @@ W drugim przypadku jednak jest to istotne (po przestawieniu nawiasów często ty
 
 Powiedzmy, że chcemy napisać funkcję `decimal`, która dla listy cyfr da wartość takiej listy w systemie dziesiętnym, np.
 
-```
+``` haskell
 decimal [3, 5, 7] = 357
 ```
 
 możemy ją zrealizować przy pomocy mnożenia przez 10 i sumowania
 
-```
+``` haskell
 decimal [x1, x2, x3] = (((x1*10)+x2)*10)+x3
 ```
 
@@ -1115,7 +983,7 @@ foldl f e []     = e
 foldl f e (x:xs) = foldl f (f e x) xs
 ```
 
-zamieniającej listę `x1:(x2:(x3:...xn:[]))` 
+zamieniającej listę `x1:(x2:(x3:...xn:[]))`
 na wartość `(((e ⊕ x1)⊕x2)⊕x3)⊕...xn))`.
 
 
@@ -1151,152 +1019,6 @@ Np `maxlist = foldr1 max`
 ```
 ghci> foldr1 max [2,1,4,3]
 4
-```
-
-## Znaczenie praw
-
-Prawa w postaci równości typu
-
-``` haskell
-map f . map g = map (f . g)
-```
-
-mają co najmniej dwa zastosowania
-
-1. Wnioskowanie o programach (dowodzenie własności, wyprowadzanie implementacji na podstawie specyfikacji)
-
-2. Automatyczne przekształcenia programów ("optymalizacja"):
-
-biblioteki zawierają reguły przekształcenia postaci
-
-``` haskell
-{-# RULES
-      "map/map"    forall f g xs.  map f (map g xs) = map (f.g) xs
-  #-}
-```
-
-jeżeli kompilator wykryje wyrażenie postaci takiej jak lewa strona reguły, zastapi ją prawą.
-
-Jest to możliwe dzieki zasadzie przejrzystości:
-
-> zastąpienie części wyrażenia innym wyrażeniem o tej samej wartości daje równoważne wyrażenie.
-
-Dzięki przejrzystości kompilator może wykonać także inną optymalizację - tzw. inlining czyli zastapienie lewej strony definicji prawą.
-
-## Deforestacja
-
-Pod tym terminem kryje się operacja polegająca na eliminacji pośrednich list (w ogólności: drzew).
-
-Na przykład
-
-``` haskell
-fact :: Int -> Int
-fact n = foldr (*) 0 [1..n]
-```
-
-wydawałoby się, że ta funkcja jest bardzo nieefektywna - buduje listę, a potem ją konsumuje.
-
-Tymczasem jest inaczej:
-
-- po pierwsze to nie działa w ten sposób - argumenty są obliczane na tyle, na ile są potrzebne, czyli produkcja listy jest sterowana konsumpcją (pamiętacie `zip [1..] "halo"`?)
-- po drugie kompilator potrafi wykryć takie sytuacje i całkowicie wyeliminować listę.
-- w efekcie zostanie wydajna funkcja działająca tylko na liczbach
-
-### Deforestacja - przykład
-
-(z programu obliczającego liczbę związków organicznych pewnego rodzaju)
-
-``` haskell
-three_partitions :: Int -> [(Int,Int,Int)]
-three_partitions m
-  = [ (i,j,k) | i <- [0..(m `div` 3)],
-      j <- [i..(m-i `div` 2)],
-      let k = m - (i+j)
-    ]
-
-main = print (length (three_partitions 4000))
-```
-Program tworzy ca 4 miliony krotek.
-
-Bez deforestacji alokuje ca 800M pamięci. 
-
-Dzięki zastosowaniu reguły `foldr/build`, tylko 50k (i działa 40-krotnie szybciej).
-
-## Przykład wyprowadzania implementacji - lepsze reverse
-
-Rozważmy funkcję odwracającą listę
-
-``` haskell
-rev :: [a] -> [a]
-rev []     = []
-rev (x:xs) = rev xs ++ [x]
-```
-
-Zauważmy, że ma ona złożoność kwadratową, gdyż `(++)` ma złożoność liniową zwn długość pierwszego argumentu.
-
-Skoro problemem jest tu konkatencja, możemy spróbować zaradzić temu pisząc funkcję ogólniejszą, która łączy odwracanie i konkatenację:
-
-``` haskell
-revA xs ys = rev xs ++ ys
-```
-oczywiście gdybyśmy potraktowali to jako definicję, nic by to nie pomogło,<br />
-ale możemy potraktować powyższą równość jako specyfikację i systematycznie skonstruować lepszą definicję `revA`
-
-### Od specyfikacji do implementacji
-Specyfikacja
-
-``` haskell
-revA xs ys = rev xs ++ ys
-```
-
-Wyprowadzenie dla listy pustej:
-
-``` haskell
-revA [] ys   = 
-rev [] ++ ys =
-[] ++ ys = ys
-```
-Wyprowadzenie dla listy niepustej:
-``` haskell
-revA (x:xs) ys   =
-rev (x:xs) ++ ys =
-(rev xs ++ [x]) ++ ys = 
-rev xs ++ ([x] ++ ys) =
-rev xs ++ (x:ys) =
-revA xs (x:ys)
-```
-
-### Implementacja
-
-w ten sposób otrzymujemy następującą definicję `revA`:
-
-``` haskell
-revA [] ys     = ys
-revA (x:xs) ys = revA xs (x:ys)
-```
-
-która ma złożoność liniową zwn długość pierwszego argumentu.
-W związku z tym 
-
-``` haskell
-reverse xs = revA xs []
-```
-
-też ma złożoność liniową.
-
-**Ćwiczenie:** spróbuj podobnie ulepszyć funkcję
-
-``` haskell
-flatten :: Tree a -> [a]
-flatten (Leaf x)   = [x]
-flatten (Node l r) = flatten l ++ flattten r
-```
-
-**Ćwiczenie:** dla powyższej definicji `reverse` wykaż
-
-``` haskell
-reverse (reverse xs) = xs
-reverse (xs ++ ys)   = reverse ys ++ reverse xs
 ```
 
 # Administrivia
