@@ -99,7 +99,8 @@ ghci> printPath test3
 S B (S B I) x z
 B x (S B I x) z
 x (S B I x z)
-x (B x x z)
+x (B x (I x) z)
+x (x (I x z))
 x (x (x z))
 
 ghci> printPath (add :$ twoB :$ threeB :$ X :$ Z)
