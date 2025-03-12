@@ -50,19 +50,19 @@ Dodawanie możemy zdefiniować przez rekurencję zwn jeden z argumentów:
 
 ``` haskell
 add :: Nat -> Nat -> Nat
-add m Zero  = m           -- add.1
-add m (S n) = S(add m n)  -- add.2
+add m Zero  = m           -- addZ
+add m (S n) = S(add m n)  -- addS
 ```
 
 Na przykład dla `add Zero (S (S Zero))` mamy
 
 ``` haskell
    add Zero (S (S Zero))
- = {- add.2 -}
+ = {- addS -}
    S(add Zero (S Zero))
- = {- add.2 -}
+ = {- addS -}
    S(S(add Zero Zero))
- = {- add.1 -}
+ = {- addZ -}
    S(S Zero)
 ```
 
@@ -224,133 +224,6 @@ ghci> S Zero - S(S Zero)
 *** Exception: Nat.hs:(57,3)-(58,19): Non-exhaustive patterns in function -
 ```
 
-# Wartości częściowe
-
-Na pierwszy rzut oka wydaje się, że do typu Nat należą wartości odpowiadające liczbom naturalnym:
-
-```
-Zero, S Zero, S(S Zero), ...
-```
-
-W rzeczywistości należy do niego także ⊥, ale na tym nie koniec
-
-```
-⊥, S ⊥, S(S ⊥), ...
-```
-
-Nazwiemy je wartościami częściowymi;<br/>
-w innych językach byłyby nieodróżnialne, ale w Haskellu możemy je odróznić.
-
-
-### Nieskończoność
-
-Wreszcie `Nat` zawiera jeszcze jedną wartość, która możemy zdefiniować jako
-
-``` haskell
-infinity :: Nat
-infinity = S infinity
-```
-
-Podsumowując, `Nat` (podobnie jak inne typy rekurencyjne) zawiera trzy rodzaje wartości:
-
-- skończone (właściwe): `Zero, S Zero, S(S Zero), ...`
-- częściowe: `⊥, S ⊥, S(S ⊥), ...`
-- nieskończone (w tym wypadku jedną): `S(S(...))`
-
-Teraz skupimy się na wartościach właściwych (skończonych).
-
-Do pozostałych wrócimy jeszcze przy omawianiu leniwej ewaluacji.
-
-### Indukcja
-
-Jedną z przyczyn, dla których zajmujemy się tu typem `Nat`, jest właśnie fakt,<br/>
-że zasada indukcji jest najbardziej znana dla liczb naturalnych
-
-Aby udowodnić, że własność `P` zachodzi dla wszystkich liczb
-<br/>naturalnych, wystarczy udowodnić:
-
-- `P(Zero)`
-- jeśli `P(n)` to `P(S n)`
-
-jak zobaczymy, ta sama zasada znajduje zastosowanie dla innych typów.
-
-### Lemat 1
-
-``` haskell
-add :: Nat -> Nat -> Nat
-add m Zero  = m           -- add.1
-add m (S n) = S(add m n)  -- add.2
-```
-Spróbujemy teraz udowodnić, ze nasze dodawanie jest przemienne. Zaczniemy od dwóch prostych lematów:
-
-**Lemat 1**
-
-$P(n) \equiv  Zero + n = n$ (to nie jest trywialne, bo  w `add` rekurencja po drugim argumencie).
-
-- $P(Zero) \equiv Zero + Zero = Zero$ - z pierwszego równania (`add.1`)
-
-- Załóżmy, P(n), czyli `Zero + n = n` (IH); pokażemy `Zero + S n = S n`:
-
-```
-  add Zero (S n)
-= { add.2 }
-  S(add Zero n)
-= { IH }
-  S n
-```
-$\Box$
-
-### Lemat 2
-
-$S\ m + n = S(m + n)$
-
-Dowód przez indukcję po $n$:
-
-- krok podstawowy
-```
-   S m + Zero
-=  { add.1 }
-   S m
-=  { add.1 wspak }
-   S (m + Zero)
-```
-- krok indukcyjny: załóżmy $P(n) \equiv  S\ m + n = S(m + n)$ (IH),
-pokażemy P(S n): `S m + S n = S(m + S n)`
-
-```
-  S m + S n
-= { add.2 }
-  S(S m + n)
-= { IH }
-  S(S(m + n))
-= { add.2 wspak }
-  S(m + S n)
-```
-$\Box$
-
-###  Przemienność dodawania
-**Twierdzenie**
-
-$$ \forall m\, n.m + n = n + m $$
-Dowód przez indukcję po $n$:
-
-- krok podstawowy:
-```
-  m + Zero ={ add }= m ={ Lemat 1 }= Zero + m
-```
-- krok indukcyjny
-```
-  m + S n
-= { add }
-  S(m + n)
-= { IH }
-  S(n + m)
-= { Lemat 2}
-  S n + m
-```
-$\Box$
-
-
 ## Iterator (funkcja fold)
 
 Większość definicji, które dotąd widzieliśmy ma wspólny schemat:
@@ -408,7 +281,7 @@ foldn g (Zero, S Zero) = (F(n), F(n+1))
 - zwięzłość zapisu
 - możliwości optymalizacji
 
-Zamiast żmudnie dowodzić przez indukcję w,łasności funkcji rekurencyjnych,<br />
+Zamiast żmudnie dowodzić przez indukcję własności funkcji rekurencyjnych,<br />
 wystarczy raz udowodnić własności `fold` a potem z nich skorzystać.
 
 Dla liczb naturalnych nie wygląda to może imponująco, ale analogiczne funkcje można zdefiniowac dla innych typów rekurencyjnych <br />
@@ -426,6 +299,8 @@ Najprostszym sposobem stworzenia listy jest wyliczenie jej elementów
 [ [1,2], [3], [] ]  :: [[Int]]
 [ (+), (-),  (*) ]  :: [Int->Int->Int]
 ```
+Lista może zawierać elementy dowolnego typu (w tym inne listy, funkcje itp),<br/>
+ale wszystkie elementy muszą być tego samego typu.
 
 ## Listy jako typ danych
 
@@ -434,7 +309,14 @@ Kanonicznym sposobem tworzenia listy jest użycie jednego z konstruktorów:
 - `[]` - lista pusta
 - `(x:xs)` - lista o głowie `x` i ogonie `xs` (nawiasy czasem można pominąć)
 
-Dwukropek (czytany "cons") jest konstruktorem listy, zwykle używanym infiksowo.
+Dwukropek (czytany "cons") jest konstruktorem listy, zwykle używanym infiksowo.</pr>
+Podobnie jak innych operatorów możemy go też użyć prefiksowo, np.
+
+``` haskell
+foo = (:) 1 []
+singleton = (:[])
+bar xs ys = foldr (:) ys xs
+```
 
 Zapis oparty na wyliczeniu elementów jest lukrem syntaktycznym:
 
@@ -526,38 +408,6 @@ concat (xs:xss) = xs ++ concat xss
 
 **Uwaga:** to jest (wykonywalna) specyfikacja, implementacja jest inna
 
-### intersperse, intercalate
-
-``` haskell
-ghci> amk = ["ala", "ma", "kota"]
-
-ghci> concat amk
-"alamakota"
-
-ghci> intercalate " - " amk
-"ala - ma - kota"
-
-ghci> intersperse " - " amk
-["ala"," - ","ma"," - ","kota"]
-
-ghci> concat it
-"ala - ma - kota"
-```
-
-NB `intersperse` i `intercalate` działają na dowolnych listach, nie tylko na napisach:
-
-``` haskell
-intercalate :: [a] -> [[a]] -> [a]
-intersperse :: a -> [a] -> [a]
-```
-
-
-na marginesie: `concat = intercalate []`:
-
-```
-ghci> intercalate [] [ [1,2], [3], [] ]
-[1,2,3]
-```
 ## reverse
 
 Kolejną ważną funkcją jest `reverse`, która odwraca kolejność elementów.
@@ -679,28 +529,6 @@ map f [] = []
 map f (x:xs) = f x : map f xs
 ```
 
-Własności:
-
-```
-map id = id
-map (f . g) = map f . map g
-map f (xs ++ ys) = map f xs ++ map f ys
-```
-
-```
-map f . tail = tail . map f             -- map.tail
-map f . reverse = reverse . map f       -- map.reverse
-map f . concat = concat . map (map f)   -- map.concat
-```
-
-Ponadto dla rygorystycznych f
-
-```
-f . head = head . map f
-```
-
-(dla pobłażliwych f może się zdarzyć, że lewa strona da wynik, a prawa nie)
-
 ### filter
 
 Wybiera elementy spełniające pewien warunek (dla których funkcja daje `True`)
@@ -713,20 +541,6 @@ filter pred (x:xs)
   | otherwise      = filter pred xs
 ```
 
-``` haskell
-filter p . filter q = filter (p && q)       -- filter.filter
-filter p . concat = concat . map(filter p)  -- filter.concat
-```
-
-Udowodnimy, że `filter p (xs ++ ys) = filter p xs ++ filter p ys`.
-
-``` haskell
-filter p (xs ++ ys) =               -- concat
-filter p (concat [xs, ys]) =        -- filter.concat
-concat(map filter p [xs, ys])       -- concat.map
-concat[filter p xs, filter p ys] =  -- concat
-filter p xs ++ filter p ys
-```
 
 ### takeWhile, dropWhile
 
@@ -748,11 +562,6 @@ Liczba `n>2` jest pierwsza wtw gdy lista takich świadków jest pusta.
 
 Co robi `dropWhile` - łatwo się domyśleć
 
-
-**Ćwiczenie:** zastanów się, czy jest prawdą, że
-``` haskell
-takeWhile p xs ++ dropWhile p xs = xs
-```
 
 ## Wycinanki listowe (list comprehensions)
 
@@ -787,12 +596,17 @@ Nadal pamiętajmy, że to tylko specyfikacja
 ### Przykłady wycinanek
 
 ``` haskell
-[(i, j) | i <-[1..4], even i, j <- [i+1..4], odd j]
-[(2,3))]
+-- >>> [(i, j) | i <-[1..4], even i, j <- [i+1..4], odd j]
+-- [(2,3)]
 
 trip n = [(x,y,z) | x<-[1..n], y <-[x..n], z <- [y..n]]
+-- >>> trip 3
+-- [(1,1,1),(1,1,2),(1,1,3),(1,2,2),(1,2,3),(1,3,3),(2,2,2),(2,2,3),(2,3,3),(3,3,3)]
+
 
 part3 m = [ (i,j,k) | i <- [0..(m `div` 3)], j <- [i..((m-i) `div` 2)], let k = m - (i+j) ]
+-- >>> part3 7
+-- [(0,0,7),(0,1,6),(0,2,5),(0,3,4),(1,1,5),(1,2,4),(1,3,3),(2,2,3)]
 
 ```
 
@@ -809,8 +623,8 @@ ghci> unzip it
 
 ``` haskell
 zip :: [a] -> [b] -> [(a,b)]
-zip []     _bs    = []
-zip _as    []     = []
+zip []      _     = []
+zip _       []    = []
 zip (a:as) (b:bs) = (a,b) : zip as bs
 ```
 Prostym przykładem użycia `zip` jest iloczyn skalarny:
@@ -866,7 +680,7 @@ zipWith :: (a->b->c) -> [a] -> [b] ->[c]
 Teraz nasze funkcje stają się "jednolinijkowcami":
 
 ``` haskell
-sp xs ys = sum(zipWith (*)) xs ys
+sp xs ys = sum(zipWith (*) xs ys)
 nondec xs = and(zipWith (<=) xs (tail xs))
 ```
 
@@ -878,19 +692,6 @@ ghci> fibs = 0:1:zipWith (+) fibs (tail fibs)
 ghci> take 20 fibs
 [0,1,1,2,3,5,8,13,21,34,55,89,144,233,377,610,987,1597,2584,4181]
 ```
-
-### zip - ćwiczenia
-
-Jaki wynik da `nondec` dla listy pustej? Jak to poprawić?
-
-Przy pomocy `zip` napisz funkcję `positions` taką, że `positions x xs` daje listę pozycji wystąpień `x` w liście `xs`
-
-``` haskell
-ghci> positions 'a' "alamakota"
-[0,2,4,8]
-```
-
-Teraz napisz funkcję `position` która daje pierwszą pozycję lub (-1) gdy nie ma wystąpień.
 
 ## Funkcje fold
 
@@ -1039,3 +840,268 @@ s k k x
 k x (k x)
 x
 ```
+
+# Tematy dodatkowe
+
+- więcej funkcji na listach
+- wartości częściowe i nieskończone
+- dowodzenie własności, indukcja
+- deforestacja
+
+# Wartości częściowe
+
+Na pierwszy rzut oka wydaje się, że do typu Nat należą wartości odpowiadające liczbom naturalnym:
+
+```
+Zero, S Zero, S(S Zero), ...
+```
+
+W rzeczywistości należy do niego także ⊥, ale na tym nie koniec
+
+```
+⊥, S ⊥, S(S ⊥), ...
+```
+
+Nazwiemy je wartościami częściowymi;<br/>
+w innych językach byłyby nieodróżnialne, ale w Haskellu możemy je odróznić.
+
+
+### Nieskończoność
+
+Wreszcie `Nat` zawiera jeszcze jedną wartość, która możemy zdefiniować jako
+
+``` haskell
+infinity :: Nat
+infinity = S infinity
+```
+
+Podsumowując, `Nat` (podobnie jak inne typy rekurencyjne) zawiera trzy rodzaje wartości:
+
+- skończone (właściwe): `Zero, S Zero, S(S Zero), ...`
+- częściowe: `⊥, S ⊥, S(S ⊥), ...`
+- nieskończone (w tym wypadku jedną): `S(S(...))`
+
+Teraz skupimy się na wartościach właściwych (skończonych).
+
+Do pozostałych wrócimy jeszcze przy omawianiu leniwej ewaluacji.
+
+### Indukcja
+
+Jedną z przyczyn, dla których zajmujemy się tu typem `Nat`, jest właśnie fakt,<br/>
+że zasada indukcji jest najbardziej znana dla liczb naturalnych
+
+Aby udowodnić, że własność `P` zachodzi dla wszystkich liczb
+<br/>naturalnych, wystarczy udowodnić:
+
+- `P(Zero)`
+- jeśli `P(n)` to `P(S n)`
+
+jak zobaczymy, ta sama zasada znajduje zastosowanie dla innych typów.
+
+### Lemat 1
+
+``` haskell
+add :: Nat -> Nat -> Nat
+add m Zero  = m           -- addZ
+add m (S n) = S(add m n)  -- addS
+```
+Spróbujemy teraz udowodnić, ze nasze dodawanie jest przemienne. Zaczniemy od dwóch prostych lematów:
+
+**Lemat 1**
+
+$P(n) \equiv  Zero + n = n$ (to nie jest trywialne, bo  w `add` rekurencja po drugim argumencie).
+
+- $P(Zero) \equiv Zero + Zero = Zero$ - z pierwszego równania (`addZ`)
+
+- Załóżmy, P(n), czyli `Zero + n = n` (IH); pokażemy `Zero + S n = S n`:
+
+```
+  add Zero (S n)
+= { addS }
+  S(add Zero n)
+= { IH }
+  S n
+```
+$\Box$
+
+### Lemat 2
+
+$S\ m + n = S(m + n)$
+
+Dowód przez indukcję po $n$:
+
+- krok podstawowy
+```
+   S m + Zero
+=  { addZ }
+   S m
+=  { addZ wspak }
+   S (m + Zero)
+```
+- krok indukcyjny: załóżmy $P(n) \equiv  S\ m + n = S(m + n)$ (IH),
+pokażemy P(S n): `S m + S n = S(m + S n)`
+
+```
+  S m + S n
+= { addS }
+  S(S m + n)
+= { IH }
+  S(S(m + n))
+= { addS wspak }
+  S(m + S n)
+```
+$\Box$
+
+###  Przemienność dodawania
+**Twierdzenie**
+
+$$ \forall m\, n.m + n = n + m $$
+Dowód przez indukcję po $n$:
+
+- krok podstawowy:
+```
+  m + Zero ={ add }= m ={ Lemat 1 }= Zero + m
+```
+- krok indukcyjny
+```
+  m + S n
+= { add }
+  S(m + n)
+= { IH }
+  S(n + m)
+= { Lemat 2}
+  S n + m
+```
+$\Box$
+
+
+### Własności map
+
+Stosuje funkcję do każdego elementu listy
+
+``` haskell
+map :: (a->b) ->  [a] -> b
+map :: (a->b) -> ([a] -> b)
+map f [] = []
+map f (x:xs) = f x : map f xs
+```
+
+Własności:
+
+```
+map id = id
+map (f . g) = map f . map g
+map f (xs ++ ys) = map f xs ++ map f ys
+```
+
+```
+map f . tail = tail . map f             -- map.tail
+map f . reverse = reverse . map f       -- map.reverse
+map f . concat = concat . map (map f)   -- map.concat
+```
+
+Ponadto dla rygorystycznych f
+
+```
+f . head = head . map f
+```
+
+(dla pobłażliwych f może się zdarzyć, że lewa strona da wynik, a prawa nie)
+
+### Własności filter
+
+Wybiera elementy spełniające pewien warunek (dla których funkcja daje `True`)
+
+``` haskell
+filter :: (a -> Bool) -> [a] -> [a]
+filter _pred []    = []
+filter pred (x:xs)
+  | pred x         = x : filter pred xs
+  | otherwise      = filter pred xs
+```
+
+``` haskell
+filter p . filter q = filter (p && q)       -- filter.filter
+filter p . concat = concat . map(filter p)  -- filter.concat
+```
+
+Udowodnimy, że `filter p (xs ++ ys) = filter p xs ++ filter p ys`.
+
+``` haskell
+filter p (xs ++ ys) =               -- concat
+filter p (concat [xs, ys]) =        -- filter.concat
+concat(map filter p [xs, ys])       -- concat.map
+concat[filter p xs, filter p ys] =  -- concat
+filter p xs ++ filter p ys
+```
+
+## Znaczenie praw
+
+Prawa w postaci równości typu
+
+``` haskell
+map f . map g = map (f . g)
+```
+
+mają co najmniej dwa zastosowania
+
+1. Wnioskowanie o programach (dowodzenie własności, wyprowadzanie implementacji na podstawie specyfikacji)
+
+2. Automatyczne przekształcenia programów ("optymalizacja"):
+
+biblioteki zawierają reguły przekształcenia postaci
+
+``` haskell
+{-# RULES
+      "map/map"     forall f g xs.  map f (map g xs) = map (f.g) xs
+      "foldr/build" forall g c n. foldr c n (build g) = g c n
+  #-}
+-- build g = g (:) []
+```
+
+jeżeli kompilator wykryje wyrażenie postaci takiej jak lewa strona reguły, zastapi ją prawą.
+
+Jest to możliwe dzieki zasadzie przejrzystości:
+
+> zastąpienie części wyrażenia innym wyrażeniem o tej samej wartości daje równoważne wyrażenie.
+
+Dzięki przejrzystości kompilator może wykonać także inną optymalizację - tzw. inlining czyli zastapienie lewej strony definicji prawą.
+
+## Deforestacja
+
+Pod tym terminem kryje się operacja polegająca na eliminacji pośrednich list (w ogólności: drzew).
+
+Na przykład
+
+``` haskell
+fact :: Int -> Int
+fact n = foldr (*) 0 [1..n]
+```
+
+wydawałoby się, że ta funkcja jest bardzo nieefektywna - buduje listę, a potem ją konsumuje.
+
+Tymczasem jest inaczej:
+
+- po pierwsze to nie działa w ten sposób - argumenty są obliczane na tyle, na ile są potrzebne, czyli produkcja listy jest sterowana konsumpcją (pamiętacie `zip [1..] "halo"`?)
+- po drugie kompilator potrafi wykryć takie sytuacje i całkowicie wyeliminować listę.
+- w efekcie zostanie wydajna funkcja działająca tylko na liczbach
+
+### Deforestacja - przykład
+
+(z programu obliczającego liczbę związków organicznych pewnego rodzaju)
+
+``` haskell
+three_partitions :: Int -> [(Int,Int,Int)]
+three_partitions m
+  = [ (i,j,k) | i <- [0..(m `div` 3)],
+      j <- [i..(m-i `div` 2)],
+      let k = m - (i+j)
+    ]
+
+main = print (length (three_partitions 4000))
+```
+Program tworzy ca 4 miliony krotek.
+
+Bez deforestacji alokuje ca 800M pamięci.
+
+Dzięki zastosowaniu reguły `foldr/build`, tylko 50k (i działa 40-krotnie szybciej).

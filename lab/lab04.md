@@ -81,13 +81,6 @@ Używając powyższej funkcji, napisz mergesort.
 
 ## zip - ćwiczenia
 
-``` haskell
-nondec xs = and(map leq pairs) where
-  leq (x,y) = x <= y
-  pairs = zip xs (tail xs)
-```
-
-Jaki wynik da `nondec` dla listy pustej? Jak to poprawić?
 
 Przy pomocy `zip` napisz funkcję `positions` taką, że `positions x xs` daje listę pozycji wystąpień `x` w liście `xs`
 
