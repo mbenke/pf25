@@ -58,11 +58,14 @@ Podobnie jak w poprzednim zadaniu, definiujemy funkcje `rstep` i `rpath` oblicza
 
 Jak poprzednio redeksem jest kombinator zaaplikowany do właściwej liczby argumentów (być może 0, np. `main`). Redukujemy w kolejnosci normalnej (od zewnątrz i od lewej)
 
-Przez kombinator będziemy rozumieć nazwę, która posiada definicję. Nazwy nie mające definicji będziemy traktować jako zmienne.
+Przez kombinator będziemy rozumieć nazwę, która posiada definicję.
+Nazwy, które nie mają definicji i nie są argumentami w bieżącej definicji będziemy traktować jako stałe.
+W przykładach piszemy je z wielkiej litery, ale to tylko konwencja (w Haskellu nazwy pisane z wielkiej litery oznaczaja konstruktory czyli w gruncie rzeczy stałe).
 
-
+Na przykład (patrz plik `peano.uhs`):
 
 ``` haskell
+zero f z = z
 one f z = f z
 two = suc one
 tre = suc two
@@ -72,28 +75,28 @@ add m n f x = m f (n f x)
 mul m n = o m n
 fyr = add two two
 six = mul two tre
-main = six s z
+main = six S Z
 ------------------------------------------------------------
-six s z
-mul two tre s z
-o two tre s z
-two (tre s) z
-suc one (tre s) z
-tre s (one (tre s) z)
-suc two s (one (tre s) z)
-s (two s (one (tre s) z))
-s (suc one s (one (tre s) z))
-s (s (one s (one (tre s) z)))
-s (s (s (one (tre s) z)))
-s (s (s (tre s z)))
-s (s (s (suc two s z)))
-s (s (s (s (two s z))))
-s (s (s (s (suc one s z))))
-s (s (s (s (s (one s z)))))
-s (s (s (s (s (s z)))))
+six S Z
+mul two tre S Z
+o two tre S Z
+two (tre S) Z
+suc one (tre S) Z
+tre S (one (tre S) Z)
+suc two S (one (tre S) Z)
+S (two S (one (tre S) Z))
+S (suc one S (one (tre S) Z))
+S (S (one S (one (tre S) Z)))
+S (S (S (one (tre S) Z)))
+S (S (S (tre S Z)))
+S (S (S (suc two S Z)))
+S (S (S (S (two S Z))))
+S (S (S (S (suc one S Z))))
+S (S (S (S (S (one S Z)))))
+S (S (S (S (S (S Z)))))
 ```
 
-albo
+albo (patrz plik `kio.uhs`)
 
 
 ``` haskell
@@ -102,13 +105,13 @@ k x y = x
 i = s k k
 om x = x x
 omega = om om
-main = k i omega z
+main = k i omega Z
 ------------------------------------------------------------
-k i omega z
-i z
-s k k z
-k z (k z)
-0
+k i omega Z
+i Z
+s k k Z
+k Z (k Z)
+Z
 ```
 
 Dla zrealizowania kroku redukcji potrzebna będzie funkcja, która dokona podstawienia wyrażeń stanowiących parametry faktyczne w miejsce parametrów formalnych w ciele kombinatora, np.
@@ -129,6 +132,11 @@ k
 ```
 
 Najprostszym sposobem uniknięcia tego problemu jest przemianowanie parametrów formalnych tak, aby każdy z nich miał unikalną nazwę.
+
+## Wypisywanie
+
+Wypisywanie definicji i kroków redukcji należy zrealizować
+definiując odpowiednie instancje klasy `Show` (metoda `showsPrec`).
 
 ## Poprawność programu
 
