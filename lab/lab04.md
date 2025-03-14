@@ -14,7 +14,7 @@ mul m (S n) = add (mul m n) n
 
 a. Zdefiniuj potęgowanie
 
-b. Popatrzmy na funkcję 
+b. Popatrzmy na funkcję
 
 ``` haskell
 eqNat :: Nat -> (Nat -> Bool)
@@ -29,6 +29,30 @@ zapisz `eqNat` nie używając lambdy ani `case`
 
 2. Zdefiniuj instancję `Show` dla `Nat` (nawiasy!)
 
+3. Zdefiniuj instancję klasy `Enum` dla `Nat` (metody `toEnum`, `fromEnum`)
+
+4. Wypróbuj podane na wykładzie definicje silni i Fibonacciego
+
+```
+λ> fact tre
+S (S (S (S (S (S Zero)))))
+λ> fromEnum it
+6
+λ> fact tre
+S (S (S (S (S (S Zero)))))
+λ> fib it
+S (S (S (S (S (S (S (S (S (S (S (S (S Zero))))))))))))
+λ> fromEnum it
+13
+```
+
+4. Spróbuj zdefiniować przy pomocy `foldn` funkcję poprzednika `npred`:
+
+```
+> npred (S (S (S Zero)))
+S (S Zero)
+```
+
 # Listy
 
 ## Podstawowe operacje
@@ -36,7 +60,7 @@ zapisz `eqNat` nie używając lambdy ani `case`
 
 Wypróbuj funkcje
 
-- head, tail 
+- head, tail
 - last, init - podobnie
 - take, drop
 - replicate
@@ -114,4 +138,3 @@ b. Napisz przy pomocy foldl/foldr
 c. Napisz `nub` (funkcję eliminującą duplikaty z listy) przy pomocy `filter`
 
 d. Napisz funkcję obliczającą iloczyn skalarny dwóch list liczb; użyj `zipWith`
-

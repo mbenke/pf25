@@ -9,10 +9,10 @@ date: Wykład 4, 17 marca 2025
 
 Chociaż mamy typy liczbowe takie jak **Integer**, liczby naturalne i operacje na nich możemy zdefiniować samodzielnie.
 
-Mimo, iż ma to niewielkie znaczenie praktyczne, posłuży nam do lepszego zrozumienia trzech waznych pojęć:
+Mimo, iż ma to niewielkie znaczenie praktyczne, posłuży nam do lepszego zrozumienia trzech ważnych pojęć:
 
 - rekurencyjne typy danych
-- definiowanie funcji przez rekurencję
+- definiowanie funkcji przez rekurencję
 - rozumowanie równościowe i indukcyjne
 
 ### Typ Nat
@@ -68,7 +68,7 @@ Na przykład dla `add Zero (S (S Zero))` mamy
 
 Powyższe stanowi (bardzo prosty) przykład *rozumowania równościowego*, z którym będziemy się często spotykać.
 
-Zauwazmy, że obliczenie `m + n` wymaga O(n) kroków.
+Zauważmy, że obliczenie `m + n` wymaga O(n) kroków.
 
 ### Show
 
@@ -114,7 +114,7 @@ instance Eq Nat where
     _    == _    = False
 ```
 
-Oczywiście moglibyśmy równość prowadząc rekurencję po jednym argumencie, np.
+Oczywiście moglibyśmy zdefiniować równość prowadząc rekurencję po jednym argumencie, np.
 
 ``` haskell
 eqNat :: Nat -> (Nat -> Bool)
@@ -126,8 +126,6 @@ eqNat (S m) = \n -> case n of
                      (S n') -> eqNat m n'
 ```
 jak widać nie jest to jednak tak zwięzłe i czytelne jak pierwsza definicja.
-
-**Ćwiczenie:** zapisz `eqNat` nie używając lambdy ani `case`
 
 ### Porządek
 
@@ -197,6 +195,66 @@ ghci> showsPrec 11 Zero ""
 "Zero"
 ```
 
+### Przypomnienie: definicja klasy Show
+
+``` haskell
+type ShowS = String -> String
+
+class Show a where
+  showsPrec :: Int    -- ^ the operator precedence of the enclosing
+                        -- context (a number from @0@ to @11@).
+                        -- Function application has precedence @10@.
+              -> a      -- ^ the value to be converted to a 'String'
+              -> ShowS
+  showsPrec _ x s = show x ++ s
+
+  show :: a -> String
+  show = shows ""
+  showList :: [a] -> ShowS
+
+shows = showsPrec 0
+
+-- showList ma domyślną definicję, która daje "[x,y,...]"
+-- podstawowe zastosowanie showList to wypisywanie napisów w instancjach Show Char, Show [Char]
+-- type String = [Char]
+```
+
+- `showsPrec` pozwala na wypisywanie z właściwą liczbą nawiasów
+- `shows` rozwiązuje problem ze złożonością konkatenacji
+
+
+### shows, ShowS
+
+Przy naiwnym tworzeniu instancji `Show` wielokrotnie używamy konkatenacji,
+która jest nieefektywna.
+
+W języku obiektowym pewnie użylibyśmy czegoś w rodzaju wzorca **Builder**.
+
+W Haskellu używamy reprezentacji funkcyjnej:
+
+```
+type ShowS = String -> String
+```
+
+napis (ogólniej: lista) jest reprezentowany jako funkcja, która dokleja swój napis przed argumentem
+
+``` haskell
+showEmpty :: ShowS
+showEmpty s = s
+
+showChar :: Char -> ShowS
+-- showChar c s = (c:s)
+showChar = (:)
+```
+
+Konkatenacja to złożenie funkcji; przejście do zwykłych napisów: zastosuj funkcję do pustego napisu
+
+
+``` haskell
+showABC = showChar 'a' . showChar 'b' . showChar 'c'
+show x = shows x ""
+```
+
 ### Odejmowanie
 Spróbujmy teraz zdefiniować odejmowanie:
 
@@ -233,6 +291,7 @@ f :: Nat -> A
 f Zero  = c
 f (S n) = h(f n)
 ```
+(schemat iteracji dla `Nat`)
 
 Możemy ten schemat zamknąć w jednej funkcji `foldn`:
 
@@ -284,7 +343,7 @@ foldn g (Zero, S Zero) = (F(n), F(n+1))
 Zamiast żmudnie dowodzić przez indukcję własności funkcji rekurencyjnych,<br />
 wystarczy raz udowodnić własności `fold` a potem z nich skorzystać.
 
-Dla liczb naturalnych nie wygląda to może imponująco, ale analogiczne funkcje można zdefiniowac dla innych typów rekurencyjnych <br />
+Dla liczb naturalnych nie wygląda to może imponująco, ale analogiczne funkcje można zdefiniować dla innych typów rekurencyjnych <br />
 (np. list) i tam są one bardzo użyteczne.
 
 # Listy
@@ -336,7 +395,7 @@ len (x:xs) = 1 + len xs
 
 ### Przykładowe operacje na listach
 
-- `head`, `tail` - częściowe, błąd dla listy pustej (w nowszych wersjach GHC ostrzeżenie)
+- `head`, `tail` - częściowe, błąd dla listy pustej (w nowszych wersjach GHC ostrzeżenie przy próbie użycia)
 - `last`, `init` - podobnie
 - `take n xs` - weź pierwsze `n` elementów listy `xs` (albo cała `xs` jeśli krótsza niż `n`)
 - `drop` - pomiń pierwsze `n` elementów (lista pusta jeśli za mało)
@@ -351,6 +410,8 @@ NB takie funkcje są w marę możności pobłażliwe, np
 ghci> length [error "crash"]
 1
 ```
+
+Niektóre z omawianych dzisiaj funkcji wymagają `import Data.List`
 
 ### Konkatenacja
 
@@ -563,6 +624,24 @@ Liczba `n>2` jest pierwsza wtw gdy lista takich świadków jest pusta.
 Co robi `dropWhile` - łatwo się domyśleć
 
 
+### partition, span
+
+Czasami odrzucone elementy też się moga przydać; mozemy wtedy użyć `partition` lub `span':
+
+``` haskell
+partition p xs = (filter p xs, filter (not . p) xs)
+span p xs = (takeWhile p xs, dropWhile p xs)
+
+-- >>> partition even [1..9]
+-- ([2,4,6,8],[1,3,5,7,9])
+
+-- >>> span (<5) [1..9]
+-- ([1,2,3,4],[5,6,7,8,9])
+
+-- >>> span even [1..9]
+-- ([],[1,2,3,4,5,6,7,8,9])
+```
+
 ## Wycinanki listowe (list comprehensions)
 
 Wycinanki stanowią wygodny sposób zapisu kombinacji `concat/map/filter`
@@ -696,7 +775,6 @@ ghci> take 20 fibs
 ## Funkcje fold
 
 Dla `Nat` wiele funkcji rekurencyjnych dało się wyrazić przy pomocy funkcji `foldn`.<br/>
-Uosabia ona schemat *pierwotnej rekursji* dla `Nat`
 
 Podobnie dla list wiele funkcji powtarza schemat
 
