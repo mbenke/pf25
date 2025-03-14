@@ -26,9 +26,10 @@ Korzystamy tylko z małego podzbioru skladni Haskella, nie ma typów - każda wa
 Dzieki temu nie musimy pisać własnego parsera, ale możemy skorzystać z biblioteki `haskell-src`. Ta biblioteka buduje drzewo struktury dla pełnej składni Haskella, musimy je przekształcić do naszej uproszczonej składni
 
 ``` haskell
-data Def = Def Name [Name] Expr
+data Def = Def Name [Pat] Expr
 data Expr = Var Name | Expr :$ Expr
-newtype Prog = Prog {progDefs :: [Def]}
+type Pat = Name
+type Name = String
 ```
 
 
@@ -42,6 +43,12 @@ fromHsModule :: HsModule -> [Def]
 ```
 (i inne potrzebne)
 
+Moduł **Language.Haskell.Parser** definiuje funkcję
+
+``` haskell
+parseModule :: String -> ParseResult HsModule
+```
+
 ## Słownik definicji
 
 W trakcie redukcji będzie nam potrzebne mapowanie nazw kombinatorów na ich definicje. Możemy zdefiniować
@@ -52,11 +59,13 @@ type DefMap = Data.Map.Map Name Def
 buildDefMap :: Prog -> DefMap
 ```
 
+Moduł **Data.Map** pochodzi z pakietu **containers**
+
 ## Redukcja
 
 Podobnie jak w poprzednim zadaniu, definiujemy funkcje `rstep` i `rpath` obliczające pojedynczy krok i ścieżke redukcji.
 
-Jak poprzednio redeksem jest kombinator zaaplikowany do właściwej liczby argumentów (być może 0, np. `main`). Redukujemy w kolejnosci normalnej (od zewnątrz i od lewej)
+Jak poprzednio, redeksem jest kombinator zaaplikowany do właściwej liczby argumentów (być może 0, np. `main`). Redukujemy w kolejności normalnej (od zewnątrz i od lewej).
 
 Przez kombinator będziemy rozumieć nazwę, która posiada definicję.
 Nazwy, które nie mają definicji i nie są argumentami w bieżącej definicji będziemy traktować jako stałe.
@@ -141,6 +150,7 @@ definiując odpowiednie instancje klasy `Show` (metoda `showsPrec`).
 ## Poprawność programu
 
 W poprawnym programie:
+
 - każdy kombinator ma dokładnie jedną definicję
 - w definicji kombinatora argumenty mają różne nazwy (czyli np definicja `bad x y x = ...` jest niepoprawna).
 - jest definicja `main`, bez argumentów

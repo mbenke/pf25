@@ -822,9 +822,7 @@ ghci> foldr1 max [2,1,4,3]
 4
 ```
 
-# Administrivia
-
-Zadanie 2 - termin 13.4
+# Zadanie 2
 
 Rozszerzamy wizualizację procesu redukcji wyrażeń kombinatorowych.
 Tym razem zestaw kombinatorów nie jest ustalony, ale dany przez użytkownika,
@@ -840,6 +838,143 @@ s k k x
 k x (k x)
 x
 ```
+
+## Składnia
+
+- korzystamy tylko z małego podzbioru składni Haskella,
+- nie ma typów - każda wartość może być zastosowana do dowolnych argumentów.
+- nie musimy pisać własnego parsera, możemy skorzystać z biblioteki `haskell-src`;
+- buduje ona drzewo struktury dla pełnej składni Haskella, musimy je przekształcić do naszej uproszczonej składni
+
+``` haskell
+data Def = Def Name [Pat] Expr
+data Expr = Var Name | Expr :$ Expr
+type Pat = Name
+type Name = String
+```
+
+Zapoznaj się z dokumentacją [haskell-src](https://hackage.haskell.org/package/haskell-src) i napisz funkcje
+
+``` haskell
+fromHsString :: String -> Prog
+fromParseResult :: ParseResult HsModule -> [Def]
+fromHsModule :: HsModule -> [Def]
+```
+(i inne potrzebne)
+
+Moduł **Language.Haskell.Parser** definiuje funkcję
+
+``` haskell
+parseModule :: String -> ParseResult HsModule
+```
+## Słownik definicji
+
+W trakcie redukcji będzie nam potrzebne mapowanie nazw kombinatorów na ich definicje. Możemy zdefiniować
+
+``` haskell
+type DefMap = Data.Map.Map Name Def
+
+buildDefMap :: Prog -> DefMap
+```
+
+Moduł **Data.Map** pochodzi z pakietu **containers**
+
+## Redukcja
+
+Podobnie jak w poprzednim zadaniu, definiujemy funkcje `rstep` i `rpath` obliczające pojedynczy krok i ścieżke redukcji.
+
+Jak poprzednio, redeksem jest kombinator zaaplikowany do właściwej liczby argumentów (być może 0, np. `main`).<br/>
+Redukujemy w kolejności normalnej (od zewnątrz i od lewej).
+
+
+- Przez kombinator będziemy rozumieć nazwę, która posiada definicję.
+- Nazwy, które nie mają definicji i nie są argumentami w bieżącej definicji będziemy traktować jako stałe.
+- W przykładach piszemy je z wielkiej litery, ale to tylko konwencja<br/> (w Haskellu nazwy pisane z wielkiej litery oznaczaja konstruktory czyli w gruncie rzeczy stałe).
+
+### Przykład - arytmetyka
+
+``` haskell
+zero f z = z
+two = suc (suc zero)
+tre = suc two
+suc n f z = f (n f z)
+mul m n f z = m (n f) z
+six = mul two tre
+main = six S Z
+------------------------------------------------------------
+six S Z
+mul two tre S Z
+two (tre S) Z
+suc (suc zero) (tre S) Z
+tre S (suc zero (tre S) Z)
+suc two S (suc zero (tre S) Z)
+S (two S (suc zero (tre S) Z))
+S (suc (suc zero) S (suc zero (tre S) Z))
+S (S (suc zero S (suc zero (tre S) Z)))
+S (S (S (zero S (suc zero (tre S) Z))))
+S (S (S (suc zero (tre S) Z)))
+S (S (S (tre S (zero (tre S) Z))))
+S (S (S (suc two S (zero (tre S) Z))))
+S (S (S (S (two S (zero (tre S) Z)))))
+S (S (S (S (suc (suc zero) S (zero (tre S) Z)))))
+S (S (S (S (S (suc zero S (zero (tre S) Z))))))
+S (S (S (S (S (S (zero S (zero (tre S) Z)))))))
+S (S (S (S (S (S (zero (tre S) Z))))))
+S (S (S (S (S (S Z)))))
+```
+
+### Przykład - kolejność redukcji
+Redukujemy od zewnątrz i od lewej, czyli nie redukujemy przedwcześnie argumentów kombinatora
+
+
+``` haskell
+k x y = x
+i x = x
+om x = x x
+omega = om om
+main = k i omega Z
+------------------------------------------------------------
+k i omega Z
+i Z
+Z
+```
+
+## Podstawienia
+Dla zrealizowania kroku redukcji potrzebna będzie funkcja, która dokona podstawienia wyrażeń stanowiących parametry faktyczne w miejsce parametrów formalnych w ciele kombinatora, np.
+
+``` haskell
+subst :: (Name, Expr) -> Expr -> Expr
+```
+**Uwaga o zmiennych:** w trakcie redukcji trzeba uważać, żeby nie pomieszać zmiennych, inaczej może nam się przydarzyć błędna redukcja:
+
+```
+s x y z = x z (y z)
+k x y = x
+main = s k k x
+------------------------------------------------------------
+s k k x
+k k (k k) -- BAD!
+k
+```
+
+Najprostszym sposobem uniknięcia tego problemu jest przemianowanie parametrów formalnych tak, aby każdy z nich miał unikalną nazwę.
+
+## Wypisywanie
+
+Wypisywanie definicji i kroków redukcji należy zrealizować
+definiując odpowiednie instancje klasy `Show` (metoda `showsPrec`).
+
+## Poprawność programu
+
+W poprawnym programie:
+
+- każdy kombinator ma dokładnie jedną definicję
+- w definicji kombinatora argumenty mają różne nazwy (czyli np definicja `bad x y x = ...` jest niepoprawna).
+- jest definicja `main`, bez argumentów
+
+W podstawowej wersji można założyć, że działamy na poprawnych programach.
+Dla uzyskania lepszej punktacji można dodać sprawdzanie tych warunków i odrzucanie programów niepoprawnych
+ze stosownym komunikatem.
 
 # Tematy dodatkowe
 
