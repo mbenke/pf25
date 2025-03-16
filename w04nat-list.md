@@ -1061,7 +1061,43 @@ ze stosownym komunikatem.
 - dowodzenie własności, indukcja
 - deforestacja
 
-# Wartości częściowe
+## intersperse, intercalate
+
+``` haskell
+ghci> amk = ["ala", "ma", "kota"]
+
+ghci> concat amk
+"alamakota"
+
+ghci> intercalate ", " amk
+"ala, ma, kota"
+
+ghci> intercalate " - " amk
+"ala - ma - kota"
+
+ghci> intersperse " - " amk
+["ala"," - ","ma"," - ","kota"]
+
+ghci> concat it
+"ala - ma - kota"
+```
+
+NB `intersperse` i `intercalate` działają na dowolnych listach, nie tylko na napisach:
+
+``` haskell
+intercalate :: [a] -> [[a]] -> [a]
+intersperse :: a -> [a] -> [a]
+```
+
+
+na marginesie: `concat = intercalate []`:
+
+```
+ghci> intercalate [] [ [1,2], [3], [] ]
+[1,2,3]
+```
+
+## Wartości częściowe
 
 Na pierwszy rzut oka wydaje się, że do typu Nat należą wartości odpowiadające liczbom naturalnym:
 
