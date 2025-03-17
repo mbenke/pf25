@@ -331,8 +331,8 @@ fib = snd . foldn g (Zero, S Zero) where
 Możemy udowodnić przez indukcję, że `fact` i `fib` obliczają silnię i Fibonacciego, dokładniej:
 
 ```
-foldn f (Zero, S Zero) = (n, n!)
-foldn g (Zero, S Zero) = (F(n), F(n+1))
+foldn f (Zero, S Zero) n = (n, n!)
+foldn g (Zero, S Zero) n = (F(n), F(n+1))
 ```
 
 ### Zalety fold
@@ -584,8 +584,8 @@ ghci> filter isPrime [3,5..100]       -- isPrime nie jest standardowa
 Stosuje funkcję do każdego elementu listy
 
 ``` haskell
-map :: (a->b) ->  [a] -> b
-map :: (a->b) -> ([a] -> b)
+map :: (a->b) ->  [a] -> [b]
+map :: (a->b) -> ([a] -> [b])
 map f [] = []
 map f (x:xs) = f x : map f xs
 ```
@@ -710,7 +710,7 @@ Prostym przykładem użycia `zip` jest iloczyn skalarny:
 
 ``` haskell
 sp :: Num a => [a] -> [a] -> a
-sp xs ys = sum(map times(zip xs ys))
+sp xs ys = sum(map times (zip xs ys))
          where times (x,y) = x * y
             -- times = uncurry (*)
 ```
@@ -1229,8 +1229,8 @@ $\Box$
 Stosuje funkcję do każdego elementu listy
 
 ``` haskell
-map :: (a->b) ->  [a] -> b
-map :: (a->b) -> ([a] -> b)
+map :: (a->b) ->  [a] -> [b]
+map :: (a->b) -> ([a] -> [b])
 map f [] = []
 map f (x:xs) = f x : map f xs
 ```
@@ -1279,7 +1279,7 @@ Udowodnimy, że `filter p (xs ++ ys) = filter p xs ++ filter p ys`.
 ``` haskell
 filter p (xs ++ ys) =               -- concat
 filter p (concat [xs, ys]) =        -- filter.concat
-concat(map filter p [xs, ys])       -- concat.map
+concat(map (filter p) [xs, ys])     -- concat.map
 concat[filter p xs, filter p ys] =  -- concat
 filter p xs ++ filter p ys
 ```
