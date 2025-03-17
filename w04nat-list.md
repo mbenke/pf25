@@ -1279,7 +1279,7 @@ Udowodnimy, że `filter p (xs ++ ys) = filter p xs ++ filter p ys`.
 ``` haskell
 filter p (xs ++ ys) =               -- concat
 filter p (concat [xs, ys]) =        -- filter.concat
-concat(map (filter p) [xs, ys])       -- concat.map
+concat(map (filter p) [xs, ys])     -- concat.map
 concat[filter p xs, filter p ys] =  -- concat
 filter p xs ++ filter p ys
 ```
