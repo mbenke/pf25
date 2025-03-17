@@ -929,6 +929,8 @@ data Def = Def Name [Pat] Expr
 data Expr = Var Name | Expr :$ Expr
 type Pat = Name
 type Name = String
+
+newtype Prog = Prog {progDefs :: [Def]}
 ```
 
 Zapoznaj się z dokumentacją [haskell-src](https://hackage.haskell.org/package/haskell-src) i napisz funkcje
