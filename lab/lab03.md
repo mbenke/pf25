@@ -19,7 +19,7 @@ b. zaimplementuj drzewa BST z funkcjami
 
 ``` haskell
 insert :: (Ord a) => a -> Tree a -> Tree a
-contains :: (Ord a) -> a -> Tree a -> Bool
+contains :: (Ord a) => a -> Tree a -> Bool
 fromList :: (Ord a) => [a] -> Tree a
 ```
 Dla znudzonych: `delete`, drzewa czerwono-czarne:
