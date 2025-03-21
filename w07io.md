@@ -1,17 +1,23 @@
 ---
 title: Programowanie Funkcyjne
-subtitle: IO
+subtitle: IO - wejście-wyjście
 author:  Marcin Benke
-date: Wykład 6', 31.3.2025
+date: Wykład 6', 24.3.2025
 ---
 
-# IO
+# IO - wejście-wyjście
+
+* Efekty i obliczenia
+* Łączenie obliczeń
+* Ważniejsze funkcje IO
+* Moduły, eksport/import
+* Budowanie programów, CABAL
 
 ## Przejrzystość
 
 Haskell jest językiem czystym, w którym obowiązuje zasada przejrzystości:
 
-* każde obliczenie wyrażenia daje ten sam wynik
+* każde obliczenie tego samego wyrażenia daje ten sam wynik
 * zastąpienie wyrażenia innym wyrażeniem o tej samej wartości daje równoważny program
 
 Na przykład
@@ -56,7 +62,7 @@ wartości typu Int, ale **obliczenie**,<br />
 
 ### Funkcja `main`
 Program w Haskellu generuje obliczenie - funkcja `main` jest typu `IO ()`.<br />
-Wykonanie funkcji `main` przez system wykonawczy realizuje to obliczenie.
+Wykonanie obliczenia, które jest wynikiem `main` przez system wykonawczy realizuje to obliczenie.
 
 Obliczenie to może być dowolnie skomplikowane, ale zaczniemy od bardzo prostego - <br />skorzystamy z funkcji (bibliotecznej)
 `putStrLn :: String -> IO ()`
@@ -95,6 +101,8 @@ write = putStr
 writeln = putStrLn
 ```
 
+Jak później zobaczymy, może to dać więcej korzyści niż tylko ładnijsza nazwa.
+
 ## Łączenie obliczeń
 
 Proste sekwencjonowanie:
@@ -115,7 +123,7 @@ mamy problem z jej wynikiem:
 
 
 ``` haskell
-getLine >> writeln ?
+getLine >> writeln  -- ?? to nawet się nie typuje
 ```
 
 Operator `>>` ignoruje wynik pierwszego argumentu i nie wiemy co wypisać.
@@ -130,12 +138,12 @@ Dlatego właściwy operator sekwencjonowania to
 
 Bierze on 
 
-- obliczenie o wyniku (typu) `a` 
-- oraz funkcję która na podstawie `a` tworzy obliczenie o wyniku `b`
-- i łaczy je w obliczenie o wyniku `b`, np.
+- obliczenie o wyniku (typu) `a`
+- oraz funkcję która na podstawie `a` tworzy obliczenie o wyniku `b`...
+- ...i łaczy je w obliczenie o wyniku `b`, np.
 
 ```haskell
-main = getLine   >>= putStrLn
+main = getLine   >>= writeln
 --    (IO String)    (String -> IO ()) 
 ```
 
@@ -150,9 +158,9 @@ Tak naprawdę typy sekwencjonowania i `pure` są ogólniejsze - wrócimy jeszcze
 
 Przy budowaniu obliczeń często pojawia się kod typu
 ```haskell
-obliczenie1 >>= (\x -> 
-  obliczenie2 >>= \y -> 
-    obliczenie3))
+foo = obliczenie1 >>= (\x -> 
+      obliczenie2 >>= (\y -> 
+      obliczenie3))
 ```
 
 Dla usprawnienia zapisu oraz dla poprawienia czytelności możemy użyć notacji `do`:
@@ -175,7 +183,7 @@ do
 ```
 
 **Uwaga:**
-`do` jest tylko równoważną notacją, samo w sobie nie powoduje efektów.
+`do` jest tylko równoważną notacją, niczym więcej
 
 ### `do` i `let`
 
@@ -229,17 +237,14 @@ getChar   :: IO Char
 getLine   :: IO String
 getContents :: IO String
 getArgs :: IO [String]    -- import System.Environment
+
+exitSuccess, exitFailure :: IO ()
+die :: String -> IO ()
 ```
 
-Funkcja `getContents` daje całą zawartość wejścia jako leniwą listę (strumień).
+Funkcja `getContents` daje całą zawartość wejścia jako leniwą listę (strumień) znaków.<br/>
+Innymi słowy kolejne znaki bedą wczytywane dopiero kiedy będą potrzebne.
 
-Ćwiczenie: jak bedzie działał program
-
-```haskell
-main = getContents >>= putStr
-```
-
-Pomyśl, a potem wypróbuj. NB `ghci` nie bardzo się do tego nadaje, lepiej użyć `ghc` lub `runghc`.
 
 ### Operacje na plikach
 
@@ -278,6 +283,32 @@ data BufferMode = NoBuffering
                 | LineBuffering
                 | BlockBuffering (Maybe Int)
 
+```
+
+### Przykład
+
+
+``` haskell
+module Main where
+import System.Environment
+-- import qualified Data.Map as Map
+
+main :: IO ()
+main = do
+  args <- getArgs
+  case args of
+    ["--help"] -> usage
+    []  -> getContents >>= runString
+    [f] -> readFile f >>= runString 
+    _   -> usage
+
+usage :: IO ()
+usage = do
+  putStrLn "Usage: program [--help] [file]"
+  putStrLn "  --help  - display this message"
+  putStrLn "  file    - input file 
+
+runString :: String -> IO ()
 ```
 
 ## Moduły
@@ -334,7 +365,7 @@ W tym przykładzie
 Do nazw możemy się też odwoływać, kwalifikując je nazwą modułu
 
 ``` haskell
-  Prelude.map (Prelude.+1) [1..9]
+Prelude.map (Prelude.+ 1) [1..9] Prelude.++ [11::Prelude.Word]
 ```
 
 Jeśli chcemy, żeby zaimportowane nazwy nie mieszały się z lokalnymi, możemy użyć  **import qualified**
@@ -350,7 +381,7 @@ Z kolei jeśli chcemy zaimportować wszystkie nazwy oprócz kilku,
 możemy użyć **hiding**:
 
 ``` haskell
-import Prelude hiding(map,filter)
+import Prelude hiding(map, filter, (<>))
 map = ...
 ```
 
@@ -403,7 +434,7 @@ Na przykład w pakiecie `containers` są dostępne struktury danych takie jak:
 
 Patrz `https://hackage.haskell.org/package/containers`
 
-Pakiet `base` jest zawsze dostępny, przy instalacji `ghc` często instalowane są opularne pakiety takie jak `containers` czy `mtl`.
+Pakiet `base` jest zawsze dostępny, przy instalacji `ghc` często instalowane są popularne pakiety takie jak `containers` czy `mtl`.
 
 Inne pakiety musimy osobno zainstalować (jeśli budujemy bezpośrednio przez `ghc`) albo dołączyć do projektu (jeśli uzywany `cabal`).
 
@@ -411,6 +442,7 @@ Inne pakiety musimy osobno zainstalować (jeśli budujemy bezpośrednio przez `g
 ## Tworzenie projektu (pakietu)
 
 ```
+$ cabal update
 $ mkdir foo && cd foo
 $ cabal init -n
 ...
@@ -423,6 +455,12 @@ $ cabal run
 Polecenie `cabal init` stworzy projekt `foo.cabal` złożony z jednego programu; ważniejsze elementy:
 
 ``` cabal
+-- Tej częsci można nie ruszać
+cabal-version:      3.4
+name:               demo
+version:            0.1.0.0
+
+-- Tu edytujemy:
 executable foo
     main-is: Main.hs
     
@@ -430,8 +468,7 @@ executable foo
     -- Pakiety niezbędne do zbudowania
     build-depends:
       base ^>=4.16.4.0,
-      containers,
-
+      containers >= 0.6,
     hs-source-dirs:   app
 ```
 Wcięcia są istotne!
@@ -456,6 +493,10 @@ $ cabal sdist  -o ..      # tworzy paczkę ze źródłami w podanym katalogu
 ### Użyteczny przykład
 
 ```
+cabal-version:      3.4
+name:               zadanie2
+version:            0.1.0.0
+
 executable zadanie2
     main-is:          Main.hs
     other-modules: Syntax, Pretty, Fun, Reduce, FromHs
@@ -499,7 +540,7 @@ test-suite zadanie2-test
     build-depends: zadanie2
 ```
 
-## Cabal bez cabal
+## Cabal bez pliku .cabal
 
 ``` haskell
 #!/usr/bin/env cabal
@@ -520,6 +561,7 @@ $ ./helloCabal.hs
 "Hello, cabal"
 fromList [("ala",1),("ela",7)]
 ```
+# Pytania ?
 
 # Bonus
 

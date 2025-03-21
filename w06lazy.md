@@ -2,7 +2,7 @@
 title: Programowanie Funkcyjne
 subtitle: Leniwa ewaluacja
 author:  Marcin Benke
-date: Wykład 6, 31.3.2025
+date: Wykład 6, 24.3.2025
 ---
 
 # Lenistwo
@@ -64,6 +64,57 @@ W przypadku gorliwej ewaluacji możemy się spodziewać że przed wywołaniem `f
 
 W przypadku leniwej ewaluacji nie wiemy kiedy i czy w ogóle cokolwiek zostanie wypisane.
 
+## Wartość nieokreślona
+
+Obliczenia mogą nie prowadzić do wyniku (błąd, zapętlenie).
+
+Aby jednak zachować zasadę, że każde poprawne wyrażenie opisuje jakąś wartość, <br />
+czasami wprowadza się "wartość nieokreśloną": $\bot$ (tzw. pinezka, ang. *bottom*).
+
+Dokładniej, wartością wyrażenia jest $\bot$,<br />
+ jeśli jego obliczenie w porządku normalnym prowadzi do błędu lub zapętlenia.
+
+W Haskellu taką wartość mają np
+
+``` haskell
+bottom1 = undefined
+bottom2 = error "some message"
+bottom3 = bottom3
+```
+
+## Funkcje rygorystyczne i pobłażliwe
+
+Jeśli $f(\bot) = \bot$, mówimy że funkcja $f$ jest *rygorystyczna*  albo *pedantyczna* (ang. *strict*).
+
+W przeciwnym wypadku mówimy, że jest *pobłażliwa*  (ang. *non-strict*).
+
+W wypadku funkcji wieloargumentowej możemy mówić, ze funkcja jest rygorystyczna ze względu na któryś argument.
+
+Rozważmy na przykład funkcje
+
+``` haskell
+id x = x
+const x y = x
+```
+
+Funkcja `id` jest rygorystyczna.
+
+Funkcja `const` jest rygorystyczna dla pierwszego argumentu, ale pobłażliwa dla drugiego:
+
+``` haskell
+id undefined = undefined
+const undefined y = undefined
+const x undefined = x
+```
+
+<!--
+Nie jest jednak w pełni rygorystyczna:
+$\quad const(\bot) = \lambda y.\bot \neq \bot$
+-->
+
+Gorliwa (eager) ewaluacja (najpierw argumenty) daje funkcje pedantyczne.<br/>
+Leniwa (lazy) ewaluacja (dopiero kiedy trzeba) pozwala na funkcje pobłażliwe.
+
 ### Czystość, pobłażliwość, lenistwo
 
 Haskell jest językiem czystym, przez co rozumiemy przede wszystkim zasadę przejrzystości.
@@ -75,20 +126,20 @@ k x y = x
 ```
 
 zgodnie z zasadą przejrzystości **dla wszystkich** x, y mamy `k x y = x`.<br />
-Jest ona zatem pobłażliwa dla drugiego argumentu. 
+Jest ona zatem pobłażliwa dla drugiego argumentu.
 
 W związku z tym nie może ona być (zawsze) ewaluowana gorliwie, bo gorliwa ewaluacja nie pozwala na pobłażliwość<br />
 - jeżeli ewaluacja `y` skończy się błędem/zapętleniem, to tak skonczy się ewaluacja `k x y`.
 
 Z kolei widać, że argument `x` jest zawsze używany, zatem obliczenie go przed wywołaniem (albo równolegle) nie zmieni znaczenia programu.
 
-Niestety w ogólności problem czy funkcja jest pedantyczna jest nierozstrzygalny. 
+Niestety w ogólności problem czy funkcja jest pedantyczna jest nierozstrzygalny (tak jak problem stopu).
 
-Dlatego domyślna ewaluacja jest leniwa.
+Dlatego domyślna ewaluacja jest leniwa, jednak kiedy kompilator potrafi wykazać, że funkcja jest pedantyczna,<br/> może użyć (wydajniejszej) gorliwej ewaluacji.
 
 ### Leniwa ewaluacja struktur danych
 
-Leniwa ewaluacja oznacza że wartości wyrażeń obliczane są wtedy kiedy są potrzebne,<br /> 
+Leniwa ewaluacja oznacza że wartości wyrażeń obliczane są wtedy kiedy są potrzebne,<br />
 ale też tylko w takim stopniu, w jakim są potrzebne
 
 ``` haskell
@@ -150,7 +201,7 @@ ghci> take 10 zs
 ```
 
 Niektóre operacje (takie jak `foldl`, `reverse`)     nie nadają sie dla list nieskończonych (albo bardzo długich),<br />
-albowiem wymagają przejścia całej listy zanim zaczną produkować wynik 
+albowiem wymagają przejścia całej listy zanim zaczną produkować wynik
 (nie są produktywne).
 
 ``` haskell
@@ -177,6 +228,8 @@ Jak to działa?
 - czwarty jest sumą drugich elementów `fibs` (1) i `tail fibs` (1)
 - i tak dalej: w każdym momencie jest obliczone tyle listy ile potrzeba
 
+![](https://upload.wikimedia.org/wikipedia/commons/7/71/Serpiente_alquimica.jpg)
+
 ### Liczby pierwsze
 
 W podobny sposób możemy stworzyć listę wsztstkich liczb pierwszych:
@@ -202,6 +255,9 @@ primes3 = 2:[x | x <- [3,5..], isPrime x] where
 Funkcja `iterate` tworzy listę powstałą przez iterowanie zastosowania funkcji:
 
 ``` haskell
+ghci> :t iterate
+iterate :: (a -> a) -> a -> [a]
+
 ghci> take 20 (iterate (+1) 0 )
 [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19]
 
@@ -211,19 +267,22 @@ ghci> take 17 (iterate (*2) 1 )
 ghci> let next a = (a + 2/a) / 2 in takeWhile (\x -> abs(x^2 - 2) > 1e-12) (iterate next 1)
 [1.0,1.5,1.4166666666666665,1.4142156862745097,1.4142135623746899]
 
+ghci> let next a = (a + 2/a) / 2 in take 1 (dropWhile (\x -> abs(x^2 - 2) > 1e-12) (iterate next 1))
+[1.414213562373095]
+
 ghci> sqrt 2
-1.4142135623730951
+ 1.4142135623730951
 ```
 
 
-## Gorliwa aplikacja 
+## Gorliwa aplikacja
 
 Domyślna aplikacja jest ewaluowana leniwie:
 
 ``` haskell
 square x = x * x
 
-  square (1+2) 
+  square (1+2)
 = (1+2) * (1+2)
 = 3*3
 ```
@@ -231,7 +290,7 @@ square x = x * x
 Mozemy wymusić (ang. *force*) ewaluację argumentu używając gorliwej aplikacji `$!`:
 
 ``` haskell
-  square $! (1+2) 
+  square $! (1+2)
 = square 3
 = 3*3
 ```
@@ -316,7 +375,7 @@ seq :: a -> b -> b
 
 która wymusza pierwszy argument i daje w wyniku drugi
 
-Zamiast 
+Zamiast
 
 ``` haskell
 const 17 $! x
