@@ -2,7 +2,7 @@
 title: Programowanie Funkcyjne
 subtitle: Leniwa ewaluacja
 author:  Marcin Benke
-date: Wykład 6, 24.3.2025
+date: Wykład 6, 31.3.2025
 ---
 
 # Lenistwo

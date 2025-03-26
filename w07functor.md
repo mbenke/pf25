@@ -2,7 +2,7 @@
 title: Programowanie Funkcyjne
 subtitle: Wyższe klasy
 author:  Marcin Benke
-date: Wykład 6/2025
+date: Wykład 7/2025
 ---
 
 # Functor

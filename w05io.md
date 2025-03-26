@@ -2,7 +2,7 @@
 title: Programowanie Funkcyjne
 subtitle: IO - wejście-wyjście
 author:  Marcin Benke
-date: Wykład 6', 24.3.2025
+date: Wykład 5, 24.3.2025
 ---
 
 # IO - wejście-wyjście

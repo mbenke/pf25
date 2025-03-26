@@ -2,7 +2,7 @@
 title: Programowanie Funkcyjne
 subtitle: Monady
 author:  Marcin Benke
-date: Wykład 9/2025
+date: Wykład 8/2025
 ---
 
 # Monady
