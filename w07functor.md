@@ -151,9 +151,10 @@ Dla typów, które są instancją `Monoid`, można pokusić się o inną charakt
 fmap f mempty = mempty
 fmap f (x <> y) = fmap f x <> fmap f y
 ```
+
 ## Skróty
 
-Dane drzewo, jak uzyskac drzewo tego samego kształtu, ale złożone z samych jedynek?
+Dane drzewo, jak uzyskać drzewo tego samego kształtu, ale złożone z samych jedynek?
 
 I podobnie dla list ...
 
@@ -166,13 +167,24 @@ ale można krócej:
 
 ``` haskell
 allOnes t = '1' <$ t
+
+-- (<$) :: Functor f => a -> f b -> f a
 -- (<$) = fmap . const
+-- '1' <$ t = (<$) '1' t = (fmap . const) '1' t = fmap (const '1') t
 
 -- >>> '1' <$ "abc"
 -- "111"
 
 -- >>> allOnes $ Node 2 (Node 1 Empty Empty) (Node 3 Empty Empty)
 -- Node '1' (Node '1' Empty Empty) (Node '1' Empty Empty)
+```
+
+To może trochę słaby przykład, ale w przyszłości zobaczymy  lepsze, np.
+
+``` haskell
+pBool :: Parser Bool
+pBool =  EBool True  <$ pKeyword "true"
+     <|> EBool False <$ pKeyword "false"
 ```
 
 ## Applicative
@@ -354,16 +366,114 @@ Możemy dodać komunikaty o błędach przy pomocy **Either**:
 
 ``` haskell
 data Either error result = Left error | Right result
-
-instance Applicative (Either e) where
-  pure = Right
-  (Right f) <*> (Right x) = Right (f x)
-  (Left e)  <*>  _        = Left e
-  _         <*> (Left e)  = Left e
 ```
 
 **Either** jest dwuargumentowym konstruktorem typu,<br/>
 ale po ustaleniu pierwszego argumentu `(Either e)` jest jednoargumentowym
+
+``` haskell
+instance Functor (Either e) where
+  fmap _ (Left e) = Left e
+  -- Uwaga: "Left e" ma różne typy po lewej i po prawej, nie można `fmap f x@(Left e) = x`
+  fmap f (Right r) = Right (f r)
+
+instance Applicative (Either e) where
+  pure = Right
+  -- pure a = Right a
+  (Right f) <*> (Right x) = Right (f x)
+  (Left e)  <*>  _        = Left e      -- uwaga jak przy Functor
+  _         <*> (Left e)  = Left e
+
+```
+
+### Either odwrotnie? (Rehtie?)
+
+``` haskell
+instance Functor (Either e) where
+  fmap _ (Left e) = Left e
+  fmap f (Right r) = Right (f r)
+```
+
+A co jeśli chcielibysmy odwrócić znaczenie Left i Right?
+
+``` haskell
+-- Uwaga: to nie jest poprawny Haskell
+
+instance Functor (Either ? e) where
+  fmap _ (Right e) = Right e
+  fmap f (Left r) = Left (f r)
+```
+
+tak niestety nie można...
+
+### Ey, what about the ring trick?
+
+![](https://ficquotes.com/images/quotes/leon-leon-the-professional-14634.jpg)
+
+
+### The ~~ring~~ Flip trick
+
+Przez analogię do funkcji
+
+``` haskell
+flip f x y = flip f y x
+```
+
+możemy zdefiniować "funktor wyższego rzędu":
+
+``` haskell
+newtype Flip f a b = Flip { unFlip :: (f b a) }
+  deriving (Eq, Show)
+
+instance Functor (Flip Either a) where
+  fmap f (Flip (Right e)) = Flip (Right e)
+  fmap f (Flip (Left a)) = Flip (Left (f a))
+
+
+-- >>> fmap succ (Flip (Left 'x'))
+-- Flip {unFlip = Left 'y'}
+
+pamf f = unFlip . fmap f . Flip
+
+-- >>> pamf succ (Left 'x')
+-- Left 'y'
+```
+
+**Ćwiczenie:** spróbuj napisać typ funkcji `pamf`
+
+### That's the ring trick
+
+![](https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEgkEts7w_B9dxmokq5M8yFOS0KgGZPrLRoDlCeuescCPs3hg5veAlnet6CldcHrwXgxnhA2BKo4B5ODHNo6lBqapSvzyZAX98Ur1LAvq1FlFEBtbm6dYtZuBt9cwNm_ziqthBCrcs9mcWY/s1600/pierscionek.png)
+
+
+### Pary
+
+W przypadku Either nie miało to może sensu, ale co z parami? łatwo zastosowac funkcję do drugiego elementu:
+
+``` haskell
+data Pair a b = Pair a b
+
+instance Functor (Pair a) where
+  fmap f (Pair a b) = Pair a (f b)
+
+-- >>> fmap succ (1,'x')
+-- (1,'y')
+```
+
+Dla pierwszego elementu mozemy posłuzyć się sztuczką z `Flip`:
+
+```
+instance Functor (Flip Pair a) where
+  fmap f (Flip (Pair a b)) = Flip (Pair (f a) b)
+
+instance Functor (Flip (,) a) where
+  fmap f (Flip (a, b)) = Flip ((f a), b)
+
+-- >>> pamf succ ('x','a')
+-- (y','a')
+```
+
+NB `pamf` jest uniwersalne
 
 ### Wiele wyników
 
@@ -417,58 +527,6 @@ instance Alternative Maybe where
 
 przykłady użycia **Alternative** zobaczymy przy omawianiu zagadnień parsingu.
 
-## Tour de force - palindromy
-
-<img src="https://imgur.com/FCgfKjB.png" width=1600 height=900>
-
-### Funkcje
-
-Konstruktor typu funkcji `(->)` jest dwuargumentowy<br/>
-Ustalając dziedzinę możemy uzyskac jednoargumentowy: `((->) r)`
-
-``` haskell
-instance Applicative ((->) r) where
-  pure x y = x
-  (<*>) f g z = f z(g z)
-```
-
-Pamiętacie kombinatory?
-
-```
-K x y =x
-S f g z = f z(g z)
-```
-
-funkcje są strukturą aplikatywną
-
-### Prawa dla Applicative
-
-``` haskell
-pure id <*> x  =  x                              -- identity
-pure (g x)     =  pure g <*> pure x              -- homomorphism
-x <*> pure y   =  pure (\g -> g y) <*> x         -- interchange
-x <*> (y <*> z) = (pure (.) <*> x <*> y) <*> z   -- composition
-```
-
-Te prawa nie są tak groźne jak wyglądają:
-
-1. Pierwsze znamy już dla `fmap` (`pure id <*> x = fmap id x = x`)
-2. Drugie mówi że `pure` zachowuje aplikację
-3. Trzecie mówi, że obliczenia czyste można wykonać przed albo po obliczeniu z efektami
-4. Czwarte to łączność dla `<*>` (z poprawką na asymetrię)
-
-Prawa te formalizują intuicję, że `pure` reprezentuje obliczenie czyste (bez efektów).
-
-Zapewniają także, że każde wyrażenie aplikatywne da się zapisać w postaci
-
-``` haskell
-pure g <*> x1 <*> ... <*> xn
-
-```
-czyli
-``` haskell
-g <$> x1 <*> ... <*> xn
-```
 
 ### Solo: A Star Wars Story
 
@@ -488,467 +546,189 @@ instance Applicative Solo where
 **Ćwiczenie:** sprawdź, że prawa `Applicative` zachodzą dla `Solo`.
 
 
-# Foldable, Traversable
-
-Zajmiemy się teraz typowymi schematami przetwarzania struktur danych.
-
-Tak jak poprzednio uogólniliśmy `map`, teraz uogólnimy `fold`
-...a potem jeszcze raz `map`.
-
-Wzorce projektowe są często opisywane przy uzyciu klas.
-Omówimy teraz klasy
-
-- Monoid (łączenie wyników)
-- Foldable (transformacje czyste)
-- Traversable (transformacje z efektami)
-
-## ~~Star~~ Monoid Wars
-
-Z klasą `Monoid` juz się zetknęliśmy, teraz zobaczymy ją w akcji
-
-
-``` haskell
-class Semigroup a where
-  (<>) :: a -> a -> a
-
-class Semigroup a => Monoid a where
-  mempty :: a
-
-  mappend :: a -> a -> a
-  mappend = (<>)
-```
-
- - `mappend` jest w klasie `Monoid` ze względu na wsteczną kompatybilność (kiedyś nie było odrębnej klasy `Semigroup`)
-
-
-``` haskell
-instance Semigroup [a] where
-  (<>) = ( ++ )
-
-newtype Sum a = Sum {getSum :: a}
-instance Num n => Semigroup (Sum n) where
-  Sum x <> Sum y = Sum (x + y)
-
-newtype All = All {getAll :: Bool}
-instance Semigroup All where (<>) = (&&)
-
-newtype Product a = Product {getProduct :: a}
-newtype Any = Any {getAny :: Bool}
-```
-
-### ~~Empire~~ Endo strikes back
-
-Ciekawym przypadkiem monoidu są endomorfizmy, to jest funkcje w obrębie danego typu
-
-```haskell
-newtype Endo a = Endo {appEndo :: a -> a}
-
-Endo f <> Endo g = Endo (f . g)
-mempty = Endo id
-```
-
-```haskell
->>> let computation = Endo ("Hello, " ++) <> Endo (++ "!")
->>> appEndo computation "Haskell"
-"Hello, Haskell!"
-
->>> let computation = Endo (*3) <> Endo (+1)
->>> appEndo computation 1
-6
-```
-
-za chwilę zobaczymy jak można je wykorzystać.
-
-### Return of the ~~Jedi~~ Monoid
- Monoid pozwala na utworzenie jednej wartości na podstawie zawartości kolekcji
- (to co jest esencją funkcji typu `fold`);<br/>
- na przykład obliczenie sumy czy stworzenie listy elementów kolekcji.
-
-Na przykład dla list moglibyśmy napisać
-
-
-``` haskell
-fold :: Monoid a => [a] -> a
-fold [] = mempty
-fold (x:xs) = x <> fold xs
--- fold = foldr mempty (<>)
-
-ghci> fold ["Ala","bama"]
-"Alabama"
-```
-niestety `fold [1..5]` nie zadziała, bo nie wiadomo jaką operację mamy na myśli.
-
-Dlatego przyda się funkcja
-
-``` haskell
-foldMap :: Monoid b => (a -> b) -> [a] -> b
-
-ghci> foldMap Product [1..5]
-Product {getProduct = 120}
-ghci> foldMap Sum [1,2,3]
-Sum {getSum = 6}
-```
-
-## Foldable
-
-Podobnie jak `fmap` uogólnia `map` na inne kolekcje, tak `Foldable` uogólnia `fold*`:
-
-``` haskell
-class Foldable t where
-  fold :: Monoid m => t m -> m
-  foldMap :: Monoid m => (a -> m) -> t a -> m
-  foldr :: (a -> b -> b) -> b -> t a -> b
-  foldl, foldl' :: (b -> a -> b) -> b -> t a -> b
-  {-# MINIMAL foldMap | foldr #-}
-```
-(jest więcej metod, tu najwazniejsze).
-
-Na przykład dla drzew
-
-```haskell
-data ETree a = Leaf a | Bin (ETree a) (ETree a) deriving (Show)
-
-instance Foldable ETree where
-    fold (Leaf x) = x
-    fold (Bin l r) = fold l <> fold r
-
-    foldMap f (Leaf x) = f x
-    foldMap f (Bin l r) = foldMap f l <> foldMap f r
-```
-
-### Składane drzewo
-
-```haskell
-instance Foldable ETree where
-    fold :: Monoid m => ETree m -> m
-    fold (Leaf x) = x
-    fold (Bin l r) = fold l <> fold r
-
-    foldMap :: Monoid m => (a -> m) -> ETree a -> m
-    foldMap f (Leaf x) = f x
-    foldMap f (Bin l r) = foldMap f l <> foldMap f r
-
-    foldr :: (a -> b -> b) -> b -> ETree a -> b
-    foldr f v (Leaf x) = f x v
-    foldr f v (Bin l r) = foldr f (foldr f v r) l
-
-    foldl :: (b -> a -> b) -> b -> ETree a -> b
-    foldl f v (Leaf x) = f v x
-    foldl f v (Bin l r) = foldl f (foldl f v l) r
-```
-
-Dlaczego `foldl/foldr` wygladają w ten sposób?
-
-A pamiętacie funkcję `flatten`?
-
-### ~~The Force~~ Deforestation Awakens
-pamiętacie funkcję `flatten`?
-
-``` haskell
-revA xs ys = rev xs ++ ys
-reverse xs = revA xs []
-
-flatA :: flatA :: ETree a -> [a] ->[a]
-flatA (Leaf x) xs = x:xs
--- foldr f v (Bin l r) = foldr f (foldr f v r) l
-flatA (Bin l r) xs = flatA l (flatA r xs)
-
-flatten :: ETree a -> [a]
-flatten t = flatA t []
-
--- flatten = foldr (:) []
-```
-
-`Foldable` pozwala nam działać na kolekcjach jak na listach, bez przekształcania ich w listy (deforestacja) ...<br/>
-...chociaż w każdej chwili możemy to łatwo zrobić.
-
-```haskell
-toList :: Foldable t => t a -> [a]
-toList t = build (\ c n -> foldr c n t)  -- = foldr (:) [] t
-```
-
-Funkcja `toList` używa `build`, aby ułatwić ewentualną  zastosowanie reguły `foldr/build` (deforestacja).
-
-### Revenge of the ~~Sith~~ List
-
-`Foldable` pozwala nam działać na kolekcjach jak na listach:
-
-``` haskell
-etree4 = Bin (Bin (Leaf 1) (Leaf 2)) (Bin (Leaf 3) (Leaf 4))
-4
-ghci> elem 3 etree4
-True
-ghci> maximum etree4
-4
-ghci> product etree4
-24
-```
-
-...stąd na pierwszy rzut oka dziwne odpowiedzi `ghci` na pytanie o typy prostych funkcji:
-
-``` haskell
-ghci> :t length
-length :: Foldable t => t a -> Int
-```
-
-### ` {-# MINIMAL foldMap | foldr #-}`
-
-klasa `Foldable` ma wiele funkcji, ale wystarczy zaimplementowac jedną, inne dają się wyrazić za jej pomocą
-
-```haskell
-fold = foldMap id
-toList = foldr (:) []          -- dla list to identyczność
-length = foldl' (\c _ -> c+1) 0
-```
-
-### ` {-# MINIMAL foldMap | foldr #-}`
-
-Trochę trudniejsza jest wzajemna wyrażalność `foldMap` i `foldr`
-
-```haskell
-foldMap :: Monoid m => (a -> b) -> t a -> b
-foldMap f = foldr (mappend . f) mempty
--- f :: a -> b; mappend :: b -> (b -> b); mappend . f  :: a -> b -> b; mempty :: b
-
-foldr :: (a -> b -> b) -> b -> t a -> b
-foldr f z t = appEndo (foldMap (Endo . f) t) z
-```
-
-Implementacja `foldr` wykorzystuje monoid `Endo`:
-
-- każdy element jest mapowany na jego działanie ($x\mapsto f\, x$); np dla `f = (+)` element `x` przechodzi na `(x+)`
-- `foldMap` sklada je w jedną funkcję
-- ta funkcja jest stosowana do wartości `z`
-
-## Traversable
-
-Poznaliśmy już `fmap`
-
-``` haskell
-class Functor t where
-    fmap :: (a -> b) -> t a -> t b
-```
-
-jako uogólnienie `map`:
-
-```haskell
-map :: (a -> b) -> [a] -> [b]
-map g [] = []
-map g (x:xs) = (:) (g x) (map g xs)
-```
-
-Załóżmy teraz, że użycie `g` może się nie powieść (wynikiem jest Maybe).
-Możemy sobie poradzić korzystając z `Applicative`:
-
-```haskell
-traverse :: (a -> Maybe b) -> [a] -> Maybe [b]
-traverse g [] = pure []
-traverse g (x:xs) = (:) <$> g x <*> traverse g xs
-```
-na przykład
-
-```haskell
-dec n = if n>0 then Just(n-1) else Nothing
->>> traverse dec [1,2,3]
-Just [0,1,2]
->>> traverse dec [2,3,0]
-Nothing
-```
-### Klasa Traversable
-
-Klasa `Traversable` uogólnia ten schemat na inne kolekcje i przypadki `Applicative`:
-
-```haskell
-class (Functor t, Foldable t) => Traversable t where
-  traverse :: Applicative f => (a -> f b) -> t a -> f (t b)
-  traverse f = sequenceA . fmap f
-
-  sequenceA :: Applicative f => t (f b) -> f (t b)
-  sequenceA = traverse id  -- a ~ f b
-```
-
-`traverse f` dla każdego elementu `x` kolekcji wybiera akcję `f x`, wykonuje te akcje w kolejności i zbiera wyniki
-
-Skoro `f` jest konstruktorem obliczenia (efektu), a `t` konstruktorem kolekcji, to `f (t b)`
-jest obliczeniem dającym kolekcję wyników.
-
-```haskell
->>> sequenceA [Just 1, Just 2, Just 3]
-Just [1,2,3]
-
->>> traverse Just [1,2,3]
-Just [1,2,3]
-```
-
-### Trawers drzewa
-
-```haskell
-instance Traversable ETree where
-    traverse :: Applicative f => (a -> f b) -> ETree a -> f (ETree b)
-    traverse f (Leaf x) = Leaf <$> f x
-    traverse f (Bin l r) = Bin <$> traverse f l <*> traverse f r
-
-    sequenceA :: Applicative f => ETree (f a) -> f (ETree a)
-    sequenceA (Leaf x) = Leaf <$> x
-    sequenceA (Bin l r) = Bin <$> sequenceA l <*> sequenceA r
-
--- >>> traverse dec (Bin (Leaf 1) (Leaf 2))
--- Just (Bin (Leaf 0) (Leaf 1))
-
--- >>> traverse dec (Bin (Leaf 1) (Leaf 0))
--- Nothing
-
--- >>> sequenceA (Bin (Leaf (Just 1)) (Leaf (Just 2)))
--- Just (Bin (Leaf 1) (Leaf 2))
-
--- >>> sequenceA (Bin (Leaf (Just 1)) (Leaf Nothing))
--- Nothing
-```
-
-## Ćwiczenia
-
-- Powtórz omawiane konstrukcje (Functor, Foldable, Traversable) dla drzew z wierzchołkami wewnetrznymi:
-
-``` haskell
-data ITree a = Empty | Node a (ITree a) (ITree a) deriving (Show)
-```
-
-- Wiemy jak zdefiniować `fmap2` przez `<*>`. A czy da się na odwrót?
-
-``` haskell
-f <*> g = fmap2 ...
-```
-
-- przy pomocy poznanych dziś mechanizmów (Applicative/Foldable/Traversable)
-napisz funkcję `allCombinations`:
-
-```
->>> allCombinations ["xyz","ab", "12"]
-["xa1","xa2","xb1","xb2","ya1","ya2","yb1","yb2","za1","za2","zb1","zb2"]
-```
-
-- (*) Rozważmy klasę
-
-```haskell
-class Liftable f where
-  unit :: f ()
-  pair :: f a -> f b -> f (a, b)
-```
-
-pokaż, że jest ona wzajemnie definiowalna z  `Applicative` (przynajmniej w sensie typów)
-
-# Zipper (Suwak)
-
-Suwak (ang. `Zipper`) jest konstrukcją ułatwiającą nawigację w złożonych strukturach i ich lokalną modyfikację
-
-``` haskell
-ghci> start
-{Bin (Bin (Tip 1) (Tip 2)) (Tip 7)}
-
-ghci> right it
-(Bin (Bin (Tip 1) (Tip 2)) {Tip 7})
-
-ghci> modifyHere (const (Bin (Tip 3) (Tip 4))) it
-(Bin (Bin (Tip 1) (Tip 2)) {Bin (Tip 3) (Tip 4)})
-
-ghci> modifyHere ($> 11) it
-(Bin (Bin (Tip 1) (Tip 2)) {Bin (Tip 11) (Tip 11)})
-
-ghci> up it
-{Bin (Bin (Tip 1) (Tip 2)) (Bin (Tip 11) (Tip 11))}
-
-ghci> left it
-(Bin {Bin (Tip 1) (Tip 2)} (Bin (Tip 11) (Tip 11)))
-
-ghci> right it
-(Bin (B Tip 1 {Tip 2}) (Bin (Tip 11) (Tip 11)))
-```
-## Implementacja
-
-Kontekst
-``` haskell
-data Cxt a = Top | L (Cxt a) (Tree a) | R (Tree a) (Cxt a)
-```
-
-Lokalizacja
-
-``` haskell
-type Loc a = (Tree a, Cxt a)
-
-modifyHere :: (Tree a -> Tree a) -> Loc a -> Loc a
-modifyHere f (e, c) = (f e, c)
-```
-
-Nawigacja
-``` haskell
-top :: Tree a -> Loc a
-top t = (t, Top)
-
-left, right, up :: Loc a -> Loc a
-left  (Bin l r, c) = (l, L c r)
-right (Bin l r, c) = (r, R l c)
-
-up (t, L c r) = (Bin t r, c)
-up (t, R l c) = (Bin l t, c)
-```
-
-## Alternatywna prezentacja
-
-Równoważną (w pewnym sensie dualną) reprezentacją
-jest opis ścieżki od korzenia zawierający kierunki ruchu<br/>oraz mijane po drodze poddrzewa:
-
-``` haskell
-data Dir = DL | DR deriving (Show, Eq)
-type Path a = [(Dir, Tree a)]
-type Foc a = (Tree a, Path a)
-```
-Podstawowa różnica polega na tym, że suwak przechowuje ścieżkę w odwrotnej kolejności, so usprawnia nawigację.
-
-Napisz funkcje przekształcające pomiedzy tymi reprezentacjami
-
-``` haskell
-toFoc   :: Loc a -> Foc a
-fromFoc :: Foc a -> Loc a
-```
-
-## Ćwiczenia
-
-1. Napisz funkcję `showLoc` wypisującą drzewa z lokalizacją jak widzieliśmy wcześniej
-
-``` haskell
-(Bin (Bin (Tip 1) (Tip 2)) {Tip 7})
-```
-
-(instancja `Show` będzie wymagała dodania pragmy `{-# OVERLAPPING #-}` )
-
-2. Stwórz zipper dla typu wyrażeń
-
-``` haskell
-data Expr = Var Name
-          | Con Name
-          | Expr :$ Expr
-          | IntLit Integer
-```
-
-można też użyć typu parametryzowanego:
-
-``` haskell
-type Expr = Exp a
-data Exp a = a
-           | Con Name
-           | Expr :$ Expr
-           | IntLit Integer
-```
-# The End(o)
-
-
-``` haskell
-
-```
 
 # Bonus
 
-### Tour de force: fmap fmap fmap
+## Tour de force - palindromy
+
+<img src="https://imgur.com/FCgfKjB.png" width=1600 height=900>
+
+### Funkcje jako Applicative
+
+Konstruktor typu funkcji `(->)` jest dwuargumentowy<br/>
+Ustalając dziedzinę możemy uzyskac jednoargumentowy: `((->) r)`
+
+``` haskell
+instance Applicative ((->) r) where
+  pure x y = x
+  (<*>) f g z = f z(g z)
+```
+
+Pamiętacie kombinatory?
+
+```
+K x y =x
+S f g z = f z(g z)
+```
+
+funkcje są strukturą aplikatywną
+
+## Prawa dla Applicative
+
+``` haskell
+pure id <*> x  =  x                              -- identity
+pure (g x)     =  pure g <*> pure x              -- homomorphism
+x <*> pure y   =  pure (\g -> g y) <*> x         -- interchange
+x <*> (y <*> z) = (pure (.) <*> x <*> y) <*> z   -- composition
+```
+
+Te prawa nie są tak groźne jak wyglądają:
+
+1. Pierwsze znamy już dla `fmap` (`pure id <*> x = fmap id x = x`)
+2. Drugie mówi że `pure` zachowuje aplikację
+3. Trzecie mówi, że obliczenia czyste można wykonać przed albo po obliczeniu z efektami
+4. Czwarte zaraz wyjaśnimy
+
+Prawa te formalizują intuicję, że `pure` reprezentuje obliczenie czyste (bez efektów).
+
+Zapewniają także, że każde wyrażenie aplikatywne da się zapisać w postaci
+
+``` haskell
+pure g <*> x1 <*> ... <*> xn
+
+```
+czyli
+``` haskell
+g <$> x1 <*> ... <*> xn
+```
+
+### Prawa dla Applicative - identity
+
+``` haskell
+pure id <*> x  =  x                              -- identity
+```
+
+To prawo jest odpowiednikiem pierwszego prawa dla `fmap`:
+
+``` haskell
+fmap id x = x
+```
+
+i podobnie jak ono mówi o zachowywaniu struktury (`pure f <*> x = fmap f x`)
+
+### Prawa dla Applicative - composition
+
+``` haskell
+x <*> (y <*> z) = (pure (.) <*> x <*> y) <*> z   -- composition
+```
+
+Pamiętając, że `<*>` uogólnia aplikację, to prawo uogólnia własność złożenia funkcji
+
+``` haskell
+x (y  z) = (.) x y z
+```
+
+Na przykład
+
+``` haskell
+ghci> (.) (+1) (*2) 3
+7
+ghci> (+1) ((*2) 3)
+7
+
+ghci> (pure (.) <*> [(+1)] <*> [(*2)]) <*> [1,2,3]
+[3,5,7]
+ghci> [(+1)] <*> ([(*2)] <*> [1,2,3])
+[3,5,7]
+```
+
+### Prawa dla Applicative - homomorphism
+
+Homomorfizm to mapowanie algebr zachowujące ich strukturę, na przykład dla słów z konkatenacją</br>
+(albo dowolnego monoidu)
+
+
+$$ f(\epsilon) = \epsilon $$
+$$ f(u\cdot v) = f(u)\cdot f(v) $$
+
+<!--
+f(ε) = ε
+
+f(uv) = f(u)f(v)
+-->
+
+``` haskell
+pure id <*> x  =  x                              -- identity
+pure (g x)     =  pure g <*> pure x              -- homomorphism
+```
+
+Przy czym tutaj zmienia się nośnik i operacja. Odpowiednikiem dla słów byłby homomorfizm
+
+$$h : \langle \Sigma^*, \epsilon, \cdot\rangle \to \langle N, 0, +\rangle $$
+$$ h(\epsilon) = 0 $$
+$$ h(u\cdot v) = h(u) + h(v) $$
+
+
+### Prawa dla Applicative - interchange
+
+``` haskell
+x <*> pure y   =  pure (\g -> g y) <*> x         -- interchange
+```
+
+To prawo mówi, że obliczenia czyste można wykonać przed albo po obliczeniu z efektami
+
+
+### Tour de force - soczewki
+
+Chcemy zdefiniować typ pozwalający skupić się na pewnym fragmencie struktury danych.
+
+Nazwijmy go "soczewką":
+
+``` haskell
+type Lens a b
+view :: Lens a b -> a -> b                -- odczytaj pole
+set  :: Lens a b -> b -> a -> a           -- ustaw pole
+over :: Lens a b -> (b -> b) -> (a -> a)  -- zmodyfikuj pole
+```
+
+
+Znów przydadzą się funktory wyższego rzędu:
+
+``` haskell
+newtype I x = I { unI :: x }
+
+instance Functor I where
+  fmap f  = I . f . unI
+
+newtype K b x = K { unK :: b }
+
+instance Functor (K b) where
+  fmap f (K b) = K b
+
+
+type Lens a b = forall t . Functor t => (b -> t b) -> (a -> t a)
+
+view :: Lens a b -> a -> b
+view l a = unK (l K a)
+
+over :: Lens a b -> (b -> b) -> (a -> a)
+over l f = unI . l (I . f)
+-- over l f a = unI $ l f' a where f' b = I (f b)
+
+set :: Lens a b -> b -> a -> a
+set l x = over l (const x)
+```
+
+### Tour de force: `fmap fmap fmap`
+
+``` haskell
+ghci>  fmap fmap fmap negate (+) 2 3
+-5
+```
+
+WTF?
+
+### Tour de force: `fmap fmap fmap` explained
 
 ``` haskell
 instance Functor (->r) where
@@ -956,6 +736,24 @@ instance Functor (->r) where
 
 fmap fmap fmap = fmap . fmap
 
+
+(f . g) x = f(g x)
+
+fmap fmap fmap negate (+) 2 3
+= (fmap . fmap) negate (+) 2 3
+= ((fmap . fmap) negate) (+) 2 3
+= fmap (fmap negate) (+) 2 3
+= (fmap (fmap negate) (\x -> (\y -> x + y))) 2 3
+= (fmap negate . ((\x -> (\y -> x + y))) 2 3
+= (fmap negate((+) 2 )) 3
+= fmap negate (+2) 3
+= negate . (+2) 3
+= negate ((+2) 3)
+= negate 5
+= -5
+```
+
+``` haskell
 ghci>  fmap fmap fmap negate (+) 2 3
 -5
 ```
