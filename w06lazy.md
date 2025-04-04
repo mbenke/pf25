@@ -304,7 +304,7 @@ f $! x $! y  -- wymusza oba
 ```
 
 Wymuszanie argumentu nie zmienia znaczenia programu jeśli funkcja jest pedantyczna dla danego argumentu<br />
- - zmienia się wtedy tylko moment obliczenia (i zachowanie pammięciowe programu).
+ - zmienia się wtedy tylko moment obliczenia (i zachowanie pamięciowe programu).
 
 ### WHNF
 
@@ -431,7 +431,7 @@ foldl’ :: (a -> b -> a) -> a -> [b] -> a
 foldl’ f v [] = v
 foldl’ f v (x:xs) = ((foldl’ f) $! (f v x)) xs
 
-sumwith' = foldl (+)
+sumwith' = foldl' (+)
 ```
 
 Którego `fold` używać?
@@ -441,3 +441,28 @@ Którego `fold` używać?
 i zależy nam na wydajności, można użyć `foldl'`
 - w innych wypadkach -`foldr` (pamiętajmy o fuzji `foldr/build`)
 - w praktyce nie ma powodu żeby używać `foldl`
+
+## Strumieniowe I/O
+
+Leniwa ewaluacja jest w konflikcie z efektami ubocznymi; poznaliśmy jeden ze sposobów radzenia sobie z tym: typ IO
+
+Z drugiej strony, strumienie (leniwe listy znaków) pozwalają na inne (historycznie pierwsze) spojrzenie  na I/O:
+
+- program produkuje strumień wyjściowy, (leniwie) konsumując strumień wejściowy
+
+
+W aktualnych wersjach Haskella takie podejście jest rzadziej używane, ale wciąz dostępne za pośrednictwem funkcji `interact`:
+
+```haskell
+smain :: [Char] -> [Char]
+main = interact smain
+```
+
+## Pytania ?
+
+## Poniedziałek zaczyna się w sobotę
+
+> "Poznanie nieskończoności wymaga nieskończonego czasu.
+> toteż wszystko jedno czy się pracuje, czy nie"
+
+- A. B. Strugaccy "Poniedziałek zaczyna się w sobotę"
