@@ -117,5 +117,21 @@ flatten (Leaf x)   = [x]
 flatten (Node l r) = flatten l ++ flattten r
 ```
 
+
+### Solo
+
+``` haskell
+data Solo a = MkSolo a
+
+instance Functor Solo where
+    fmap f (Solo a) = Solo (f a)
+
+instance Applicative Solo where
+    pure = Solo
+    Solo f <*> Solo x = Solo (f x)
+```
+
+Sprawdź, że prawa `Applicative` zachodzą dla `Solo`.
+
 ## Inne
 uncons, unsnoc
