@@ -528,27 +528,21 @@ instance Alternative Maybe where
 przykłady użycia **Alternative** zobaczymy przy omawianiu zagadnień parsingu.
 
 
-### Solo: A Star Wars Story
-
-Haskell nie ma krotek jednoelementowych, ale możemy zdefiniować (patrz `Data.Tuple`)
-
-```haskell
-data Solo a = MkSolo a
-
-instance Functor Solo where
-    fmap f (Solo a) = Solo (f a)
-
-instance Applicative Solo where
-    pure = Solo
-    Solo f <*> Solo x = Solo (f x)
-```
-
-**Ćwiczenie:** sprawdź, że prawa `Applicative` zachodzą dla `Solo`.
-
-
 
 # Bonus
 
+Pytania?
+
+## Tour de force - palindromy
+``` haskell
+ghci> palindrome = (==) <*> reverse
+ghci> palindrome "ala"
+True
+ghci> palindrome "ela"
+False
+ghci> palindrome "kajak"
+True
+```
 ## Tour de force - palindromy
 
 <img src="https://imgur.com/FCgfKjB.png" width=1600 height=900>
@@ -567,7 +561,7 @@ instance Applicative ((->) r) where
 Pamiętacie kombinatory?
 
 ```
-K x y =x
+K x y = x
 S f g z = f z(g z)
 ```
 
@@ -676,6 +670,24 @@ x <*> pure y   =  pure (\g -> g y) <*> x         -- interchange
 ```
 
 To prawo mówi, że obliczenia czyste można wykonać przed albo po obliczeniu z efektami
+
+### Solo: A Star Wars Story
+
+Haskell nie ma krotek jednoelementowych, ale możemy zdefiniować (patrz `Data.Tuple`)
+
+```haskell
+data Solo a = MkSolo a
+
+instance Functor Solo where
+    fmap f (Solo a) = Solo (f a)
+
+instance Applicative Solo where
+    pure = Solo
+    Solo f <*> Solo x = Solo (f x)
+```
+
+**Ćwiczenie:** sprawdź, że prawa `Applicative` zachodzą dla `Solo`.
+
 
 
 ### Tour de force - soczewki
