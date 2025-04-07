@@ -30,9 +30,11 @@ toList (allOnes t)
 allOnes (toList t)
 ```
 
-2. Wypróbuj 'flip trick' z wykładu:
+2. Wypróbuj 'flip trick' z wykładu (w starszych wersjach GHC wymaga pragm LANGUAGE):
 
 ``` haskell
+{-# LANGUAGE FlexibleInstances, FlexibleContexts #-}
+
 newtype Flip f a b = Flip { unFlip :: (f b a) }
   deriving (Eq, Show)
 
