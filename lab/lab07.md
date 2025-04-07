@@ -21,13 +21,41 @@ data ETree a = Tip a | Bin (ETree a) (ETree a) -- deriving Show
 
 ### Functor
 
-Napisz `instance Functor ETree`
+1. Napisz `instance Functor ETree`
 
 Porównaj, dla różnych drzew `t`
 
 ``` haskell
 toList (allOnes t)
 allOnes (toList t)
+```
+
+2. Wypróbuj 'flip trick' z wykładu:
+
+``` haskell
+newtype Flip f a b = Flip { unFlip :: (f b a) }
+  deriving (Eq, Show)
+
+instance Functor (Flip Either a) where
+  fmap f (Flip (Right e)) = Flip (Right e)
+  fmap f (Flip (Left a)) = Flip (Left (f a))
+
+
+-- >>> fmap succ (Flip (Left 'x'))
+-- Flip {unFlip = Left 'y'}
+
+pamf f = unFlip . fmap f . Flip
+
+-- >>> pamf succ (Left 'x')
+-- Left 'y'
+```
+
+- spróbuj napisać typ funkcji `pamf`
+- stwórz instancje Functor dla `(,)` po czym przy pomocy fmap/pamf napisz funkcje
+
+``` haskell
+first :: (a -> c) -> (a,b) -> (c,b)
+second :: (a -> d) -> (a,b) -> (a,d)
 ```
 
 ### Applicative
@@ -69,28 +97,4 @@ a potem sprawdź w GHCI
 NB `Applicative` dla drzew z wartościami w wierzchołkach wewnętrznych (`Tree`) na tym etapie może się wydawać niewykonalne. Ale jeszcze zobaczymy.
 
 
-## Semigroup, Monoid
-
-1. (Trywialne) Stwórz instancję `Semigroup` dla `ETree`
-
-2. (Nietrywialne) Stwórz instancję `Semigroup` dla `Tree`
-
-``` haskell
-data Tree a = Empty | Node a (Tree a) (Tree a)
-```
-
-tak aby
-
-``` haskell
--- >>> toList (fullTreeFrom 1 3 <> fullTreeFrom 11 3)
-[1,2,3,4,5,6,7,11,12,13,14,15,16,17]
-```
-
-3. (Trywialne) Stwórz instancję `Monoid` dla `Tree`
-
-4. (Łatwe) Czy potrafisz napisać funkcję
-
-``` haskell
-joinT :: Tree(Tree a) -> Tree a
-```
 
