@@ -57,7 +57,7 @@ pamf f = unFlip . fmap f . Flip
 
 ``` haskell
 first :: (a -> c) -> (a,b) -> (c,b)
-second :: (a -> d) -> (a,b) -> (a,d)
+second :: (b -> d) -> (a,b) -> (a,d)
 ```
 
 ### Applicative
