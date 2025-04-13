@@ -7,7 +7,7 @@ date: Wykład 8/2025
 
 # Monady
 
-Na poprzednich wykładach widzieliśmy już obliczenia z efektami na przykład **Maybe** przy **Applicative** i **Traversable**, czy **IO**.
+Na poprzednich wykładach widzieliśmy już obliczenia z efektami na przykład **Maybe** przy **Applicative** i **IO**.
 
 poznalismy też metodę
 
@@ -67,13 +67,18 @@ Użycie `<*>` też nie pomoże (sprawdź!) - mamy dostep do wyniku pierwszego ob
 
 ### Proste przykłady
 
-**Maybe** może zostac użyte dla obliczeń zawodnych
+**Maybe** może zostać użyte dla obliczeń zawodnych
 
 ``` haskell
 instance Monad Maybe where
   (Just a) >= k = k a
   Nothing >= _ = Nothing
+
+  -- return = pure = Just
 ```
+
+- `Just x` to sukces z wynikiem `x`
+- `Nothing` to porażka
 
 ### Wyrażenia z dzieleniem
 
@@ -100,6 +105,17 @@ eval (Div x y) = eval x >>= \n ->
 		 safediv n m
 ```
 
+albo używając **do**:
+
+``` haskell
+eval (Div x y) = do
+  n <- eval x
+  m <- eval y
+  safediv n m
+```
+
+... ale uwaga: nie wystarczy tu `<*>` z **Applicative** (sprawdź!).
+
 ### Komunikaty o błędach
 
 Podobnie jak wcześniej, mozemy też użyc **Either**:
@@ -110,7 +126,8 @@ instance Monad (Either e) where
     Right x >>= k = k x
 ```
 
-Abstrakcyjny protokół obsługi błędów (warunek `m -> e` oznacza, że typ `m` jednoznacznie wyznacza typ błędu `e`; na razie nieistotne)
+Abstrakcyjny protokół obsługi błędów<br/>
+(warunek `m -> e` oznacza, że typ `m` jednoznacznie wyznacza typ błędu `e`; na razie nieistotne)
 
 ``` haskell
 class Monad m => MonadError e m | m -> e where
@@ -230,7 +247,7 @@ getVar n = do
 albo krócej z rozszerzeniem `LambdaCase`:
 
  ``` haskell
-getVar n = reader (Map.lookup n) >>= \case ...`
+getVar n = reader (Map.lookup n) >>= \case ...
 ```
 
 ### Ćwiczenia
@@ -293,12 +310,14 @@ instance Monad (State s) where
 ``` haskell
 first :: (a->b) -> (a,c) -> (b,c)
 first f (a,c) = (f a, c)
+-- first = pamf
 
 ap :: Monad m => m (t -> b) -> m t -> m b
 ap mf mx = do { f <- mf; x <- mx; pure (f x) }
 
 instance Functor (State s) where
     fmap g (State p) = State (first g . p)
+    -- fmap g (State p) = State (pamf g . p)
 
 instance Applicative (State s) where
     pure x = State (x,)  -- \s -> (x,s)
@@ -334,9 +353,9 @@ class Monad m => MonadState s m | m -> s where
 -- >      Main> :t modify ((+1) :: Int -> Int)
 -- >      modify (...) :: (MonadState Int a) => a ()
 --
---    This says that @modify (+1)@ acts over any
---    Monad that is a member of the @MonadState@ class,
---    with an @Int@ state.
+--    This says that modify (+1) acts over any
+--    Monad that is a member of the MonadState class,
+--    with an Int state.
 modify :: MonadState s m => (s -> s) -> m ()
 modify f = state (\s -> ((), f s))
 ```
@@ -400,7 +419,7 @@ run p = execState (mapM_ exec p) 0
 
 ### MonadState - liczby pseudolosowe
 
-Haskell Programming s.875; NB deprecated next
+<!-- Haskell Programming s.875; NB deprecated next -->
 
 ``` haskell
 {- cabal:
@@ -409,9 +428,11 @@ Haskell Programming s.875; NB deprecated next
 import System.Random
 
 roll :: StdGen -> (Int, StdGen)
-roll = uniformR (1, 6::Int)rollD6 :: Int
+roll = uniformR (1, 6::Int)
 
 pureGen = mkStdGen 1
+
+rollD6 :: Int
 rollD6 = fst $ roll pureGen
 
 -- >>> pureGen
@@ -423,6 +444,18 @@ rollD6 = fst $ roll pureGen
 ```
 
 na tej kostce zawsze wypada 6
+
+
+(oczywiście można uzyć IO, ale wtedy się już od niego nie uwolnimy)
+
+```
+ghci> randomRIO (1,6)
+1
+ghci> randomRIO (1,6)
+4
+ghci> randomRIO (1,6)
+2
+```
 
 ### Rzuć 3d6
 
@@ -655,43 +688,181 @@ guard b = if b then return () else mzero
 
 <!-- ### Guards! Guards! -->
 
+# Zadanie 3
+W tym zadaniu rozszerzamy język z Zadania 2 o konstruktory wartości i dopasowanie wzorca.
+Tym niemniej nadal nie wprowadzamy żadnej kontroli typów - każda wartość może być zastosowana do dowolnych argumentów.
 
-## Parsery - analiza tekstów
+**Termin:** 1 czerwca, godz. 20
 
-Pierwsze przybliżenie: parser dla typu **a** dostaje listę znaków i daje rozpoznany w nim element **a** (tak jak klasa **Read**)
-
-``` haskell
-read :: Read a => String -> a
-```
-Co z błędami? Niejednoznacznośc rozkładu? Jak łączyć parsery?
-
-Pomysł 1:
-``` haskell
-readMaybe :: Read a => String -> Maybe a  -- Text.Read
-```
-
-Pomysł 2:
-``` haskell
-readMany :: Read a => String -> [a]       -- fikcja
-```
-
-Pomysł 3:
+Na przykład
 
 ``` haskell
-type ReadS a = String -> [(a, String)]
+two = S (S Z)
+add Z n = n
+add (S m) n = S (add m n)
+main = add (S (S Z)) two
+------------------------------------------------------------
+add (S (S Z)) two
+S (add (S Z) two)
+S (S (add Z two))
+S (S two)
+S (S (S (S Z)))
 ```
 
-Parser ``zużywa'' pewien prefiks wejścia aby odczytać **a**, oddaje niewykorzystaną resztę wejścia (którą może odczytać kolejny parser)
+Tak jak w Haskellu, nazwy z wielkiej litery oznaczają konstruktory.
 
-Wynikiem działania jest lista możliwych odczytań (być może pusta).
+## Składnia
 
-## Parsery: stan + lista
+Korzystamy tylko z małego podzbioru skladni Haskella, nie ma typów - każda wartość może być zastosowana do dowolnych argumentów.
 
-
-Zauważmy, że
+Dzieki temu nie musimy pisać własnego parsera, ale możemy skorzystać z biblioteki `haskell-src`.
+Wynik `parseModule`  musimy  przekształcić do naszej uproszczonej składni
 
 ``` haskell
-String -> (a, String)
+type Name = String
+data Def = Def { defMatches :: [Match] }
+data Match = Match { matchName :: Name
+                   , matchPats :: [Pat]
+                   , matchRhs  ::Expr
+                   }
+
+infixl 9 :$
+data Expr
+    = Var Name
+    | Con Name
+    | Expr :$ Expr
+data Pat = PVar Name | PApp Name [Pat]
 ```
 
-reprezentuje obliczenia ze stanem typu String
+## Dopasowania
+
+Stwierdzenie, czy argument pasuje do wzorca może wymagać wykonania jednego lub więcej kroków redukcji tego argumentu. W językach leniwych istotnie zwykle to dopasowanie wzorca wymusza redukcje. Tym  niemniej argument jest redukowany "tylko tyle ile potrzeba", czyli aż do momentu rozstrzygnięcia czy pasuje do wzorca.
+
+
+``` haskell
+one = S Z
+two = S one
+add Z     n = n
+add (S m) n = S (add m n)
+main = add two two
+------------------------------------------------------------
+add two two
+S (add one two)
+S (S (add Z two))
+S (S two)
+S (S (S one))
+S (S (S (S Z)))
+```
+
+### Poziom 1
+
+Przy prostej implementacji dopasowania wzorca może się zdarzyć że takie "wymuszone" redukcje pozostaną nieodnotowane, np.
+
+``` haskell
+two = S (S Z)
+add Z     n = n
+add (S m) n = S (add m n)
+main = add two two
+------------------------------------------------------------
+add two two
+S (add (S Z) two)
+S (S (add Z two))
+S (S two)
+S (S (S (S Z)))
+```
+
+Na tym poziomie można poprzestać na rozwiązaniu, które w takich przypadkach łączy niektóre kroki, oczywiście pod warunkiem że redukcja jest ogólnie poprawna.
+Takie rozwiązania mogą liczyć (o ile nie mają innych braków) na ok. 50-60% punktów.
+
+
+### Poziom 2
+
+Jednym ze sposobów rozwiązania tego problemu jest precyzyjne odnotowywanie wszystkich kroków wraz z kontekstem w jaki się odbywają.
+
+Można wykorzystać do tego celu monadę stanu, która będzie przechowywać historię redukcji (wraz z ich kontekstami).<br/>
+Stan może ponadto zawierać także listę definicji i ilość pozostałego "paliwa" (kroków, po których uznamy, że obliczenie jest zapętlone lub za długie do wyświetlenia), oraz inne informacje które uznamy za potrzebne.
+
+Do reprezentacji kontekstu i nawigacji wewnątrz wyrażen można uzyć techniki "zipper"<br/>
+(ewentualnie po prostu ścieżki będącej listą elementów "lewo-prawo", ale to słabsze rozwiązanie).
+
+``` haskell
+two = S (S Z)
+add Z     n = n
+add (S m) n = S (add m n)
+main = add two two
+------------------------------------------------------------
+{main}
+{add two two}
+add {S (S Z)} two
+{S (add (S Z) two)}
+S {add (S Z) two}
+S {S (add Z two)}
+S (S {add Z two})
+S (S {two})
+S (S {S (S Z)})
+S (S (S {S Z}))
+S (S (S (S {Z})))
+```
+
+Postać wyjścia nie musi być dokładnie taka jak powyżej, ważne aby w poprawny i czytelny sposób ilustrowała proces redukcji.
+
+## Sekwencje
+
+Do przechowywania historii przyda się typ sekwencji, w którym dodawanie elementu na końcu odbywa się w czasie stałym
+
+Zdefiniuj typ
+
+``` haskell
+newtype SnocList a = SnocList {unSnocList :: [a]}
+toList :: SnocList a -> [a]
+fromList :: [a] -> SnocList a
+snoc :: SnocList a -> a -> SnocList a
+```
+
+oraz instancje `Eq, Show, Semigroup, Monoid, Functor, Applicative, Alternative`.
+
+
+## Wymagania techniczne
+
+Analogicznie jak w poprzednio, w tym zadaniu tworzymy pakiet cabal o nazwie `identyfikator-zadanie3`
+(identyfikator ze students, np. mb128410)
+który powinien budować się przy użyciu narzędzi ze students (GHC 9.0.2, cabal 3.4);
+mile widziane, zeby budowal się też z nowszymi wersjami GHC (np 9.4.8, 9.8.2);
+w tym celu warto w pliku cabal zamiast frazy
+```
+base^>=4.15.1.0
+```
+
+użyć
+```
+base>=4.15.1.0
+```
+
+Pakiet powinien dostarczać co najmniej plik wykonywalny `zadanie3`, n.p.
+
+```
+$ cabal run -- zadanie3
+Usage: zadanie3 [--help] [file]
+  --help  - display this message
+  file    - file with program to reduce
+```
+
+Oddajemy pojedynczy plik `.tar.gz` stworzony poprzez `cabal sdist`
+
+```
+$ cabal sdist
+Wrote tarball sdist to
+/home/ben/Zajecia/pf/code/zadanie3/dist-newstyle/sdist/zadanie3-0.1.0.0.tar.gz
+```
+
+Proszę sprawdzić, że pakiet otrzymany z rozpakowania tego pliku się buduje.
+
+Zadanie MUSI być rozwiązane samodzielnie.
+Wszelkie zapożyczenia muszą być wyraźnie zaznaczone z podaniem źródła.
+Dotyczy to także kodu wygenerowanego/zasugerowanego przez narządzia AI i pokrewne
+(VS Code, Copilot, ChatGPT, Claude itp.)
+
+Ponadto student musi umieć objaśnić sposób działania każdego fragmentu oddanego kodu
+(wyjaśnienia typu "Znalazłem na Stackoverflow/Copilot mi podpowiedział i działa ale nie wiem jak" itp => 0p).
+
+# Pytania?
