@@ -193,7 +193,8 @@ $\Box$
 
 ### Lemat 2
 
-$$S\ m + n = S(m + n)$$
+$S\ m + n = S(m + n)$
+
 Dowód przez indukcję po $n$:
 
 - krok podstawowy 
