@@ -1,8 +1,12 @@
 ## Semigroup, Monoid
 
-1. (Trywialne) Stwórz instancję `Semigroup` dla `ETree`
+1. (Trywialne) Stwórz instancję `Semigroup` dla `ETree` (wartości w liściach)
 
-2. (Nietrywialne) Stwórz instancję `Semigroup` dla `Tree`
+``` haskell
+data ETree a = Tip a | Bin (ETree a) (ETree a) -- deriving Show
+```
+
+2. (Nietrywialne) Stwórz instancję `Semigroup` dla `Tree` (wartości w wierzchołkach wewnętrznych)
 
 ``` haskell
 data Tree a = Empty | Node a (Tree a) (Tree a)
