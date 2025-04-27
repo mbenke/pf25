@@ -1,3 +1,28 @@
+## Semigroup, Monoid
+
+1. (Trywialne) Stwórz instancję `Semigroup` dla `ETree`
+
+2. (Nietrywialne) Stwórz instancję `Semigroup` dla `Tree`
+
+``` haskell
+data Tree a = Empty | Node a (Tree a) (Tree a)
+```
+
+tak aby
+
+``` haskell
+-- >>> toList (fullTreeFrom 1 3 <> fullTreeFrom 11 3)
+[1,2,3,4,5,6,7,11,12,13,14,15,16,17]
+```
+
+3. (Trywialne) Stwórz instancję `Monoid` dla `Tree`
+
+4. (Łatwe) Czy potrafisz napisać funkcję
+
+``` haskell
+joinT :: Tree(Tree a) -> Tree a
+```
+
 ## Foldable
 
 Stwórz instancję `Foldable` dla drzew
@@ -56,7 +81,6 @@ fromFoc :: Foc a -> Loc a
 data Expr = Var Name
           | Con Name
           | Expr :$ Expr
-          | IntLit Integer
 ```
 
 można też użyć typu parametryzowanego:
@@ -66,7 +90,6 @@ type Expr = Exp a
 data Exp a = a
            | Con Name
            | Expr :$ Expr
-           | IntLit Integer
 ```
 
 
