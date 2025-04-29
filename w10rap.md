@@ -666,7 +666,7 @@ Na przykład
 
 ``` haskell
 fact :: Int -> Int
-fact n = foldr (*) 0 [1..n]
+fact n = foldr (*) 1 [1..n]
 ```
 
 wydawałoby się, że ta funkcja jest bardzo nieefektywna - buduje listę, a potem ją konsumuje.
