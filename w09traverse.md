@@ -121,7 +121,7 @@ class Foldable t where
   foldl, foldl' :: (b -> a -> b) -> b -> t a -> b
   {-# MINIMAL foldMap | foldr #-}
 ```
-(jest więcej metod, tu najwazniejsze).
+(jest więcej metod, tu najważniejsze).
 
 Na przykład dla drzew
 
@@ -157,12 +157,12 @@ instance Foldable ETree where
     foldl f v (Bin l r) = foldl f (foldl f v l) r
 ```
 
-Dlaczego `foldl/foldr` wygladają w ten sposób?
+Dlaczego `foldl/foldr` wyglądają w ten sposób?
 
 A pamiętacie funkcję `flatten`?
 
 ### ~~The Force~~ Deforestation Awakens
-pamiętacie funkcję `flatten`? A liniowe reverse?
+pamiętacie funkcję `flatten`? A liniowe `reverse`?
 
 ``` haskell
 -- revA xs ys = rev xs ++ ys
@@ -191,7 +191,7 @@ toList :: Foldable t => t a -> [a]
 toList t = build (\ c n -> foldr c n t)  -- = foldr (:) [] t
 ```
 
-Funkcja `toList` używa `build`, aby ułatwić ewentualną  zastosowanie reguły `foldr/build` (deforestacja).
+Funkcja `toList` używa `build`, aby ułatwić ewentualne zastosowanie reguły `foldr/build` (deforestacja).
 
 ### Revenge of the ~~Sith~~ List
 
@@ -218,7 +218,7 @@ length :: Foldable t => t a -> Int
 
 ### ` {-# MINIMAL foldMap | foldr #-}`
 
-klasa `Foldable` ma wiele funkcji, ale wystarczy zaimplementowac jedną, inne dają się wyrazić za jej pomocą
+klasa `Foldable` ma wiele funkcji, ale wystarczy zaimplementować jedną, inne dają się wyrazić za jej pomocą
 
 ```haskell
 fold = foldMap id
@@ -241,7 +241,7 @@ foldr f z t = appEndo (foldMap (Endo . f) t) z
 
 Implementacja `foldr` wykorzystuje monoid **Endo**:
 
-- każdy element jest mapowany na jego działanie ($x\mapsto f\, x$); np dla `f = (+)` element `x` przechodzi na `(x+)`
+- każdy element jest mapowany na jego działanie ($x\mapsto f\ x$); np dla `f = (+)` element `x` przechodzi na `(x+)`
 - `foldMap` sklada je w jedną funkcję (w monoidzie **Endo** działaniem jest złożenie)
 - ta funkcja jest stosowana do wartości `z`
 
@@ -383,7 +383,7 @@ Lepszy kontekst (od dołu do góry)
 ``` haskell
 data Cxt a = Top | L (Cxt a) (Tree a) | R (Tree a) (Cxt a)
 ```
-Kontekst `L c r` oznacza "jesteśmy w lewym poddrzewie, nad nami jest c a prawym bratem jest r"
+Kontekst `L c r` oznacza "jesteśmy w lewym poddrzewie, nad nami jest `c`, a prawym bratem jest `r`".
 
 **Lokalizacja** (drzewo w kontekście)
 
