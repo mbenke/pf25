@@ -50,7 +50,7 @@ instance Num n => Semigroup (Sum n) where
   Sum x <> Sum y = Sum (x + y)
 
 newtype All = All {getAll :: Bool}
-instance Semigroup All where (<>) = (&&)
+instance Semigroup All where All a <> All b = All (a && b)
 
 newtype Product a = Product {getProduct :: a}
 newtype Any = Any {getAny :: Bool}
