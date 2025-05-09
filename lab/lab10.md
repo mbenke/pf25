@@ -19,7 +19,6 @@ Udowodnij:
 - łączność dodawania/mnożenia
 - rozdzielność mnożenia względem dodawania: `k*(m+n) = k*m + k*n`
 
-Udowodnij przemienność dodawania przy pomocy fuzji
 
 ## Konstrukcja programów
 
@@ -117,7 +116,6 @@ flatten (Leaf x)   = [x]
 flatten (Node l r) = flatten l ++ flattten r
 ```
 
-
 ### Solo
 
 ``` haskell
@@ -133,5 +131,26 @@ instance Applicative Solo where
 
 Sprawdź, że prawa `Applicative` zachodzą dla `Solo`.
 
-## Inne
-uncons, unsnoc
+``` haskell
+pure id <*> x  =  x                              -- identity
+pure (g x)     =  pure g <*> pure x              -- homomorphism
+x <*> pure y   =  pure (\g -> g y) <*> x         -- interchange
+x <*> (y <*> z) = (pure (.) <*> x <*> y) <*> z   -- composition
+```
+
+## Prawa dla Monad - ćwiczenie
+
+``` haskell
+return x >>= f    =  f x
+mx >>= return     =  mx
+(mx >>= f) >>= g  =  mx >>= (\y -> f y >>= g)
+```
+
+**Ćwiczenie:** wykaż, że powyzsze prawa są spełnione dla
+
+``` haskell
+instance Monad Maybe where
+  return         = Just
+  Nothing  >>= f = Nothing
+  (Just x) >>= f = Just (f x)
+```
