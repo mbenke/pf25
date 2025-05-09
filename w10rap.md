@@ -2,7 +2,7 @@
 title: Programowanie Funkcyjne
 subtitle: Wnioskowanie o programach
 author:  Marcin Benke
-date: Wykład 11, 12 maja 2025
+date: Wykład 10, 12 maja 2025
 ---
 
 # Wnioskowanie o programach
@@ -43,9 +43,13 @@ przypadkach.
 
 ## Rozgrzewka: liczby naturalne
 
-``` {.haskell .literate}
-import Test.QuickCheck
+``` haskell
+-- import Numeric.Natural
+
 data Nat = Zero | S Nat deriving(Eq,Show)
+
+instance Num Nat where ...
+instance Integral Nat where ...
 ```
 
 ### Dodawanie
@@ -65,7 +69,7 @@ Na przykład dla `add Zero (S (S Zero))` mamy
  = {- add.2 -}
    S(add Zero (S Zero))
  = {- add.2 -}
-   S(S(add Zero Zero)) 
+   S(S(add Zero Zero))
  = {- add.1 -}
    S(S Zero)
 ```
@@ -79,7 +83,7 @@ Spróbujmy teraz zdefiniować odejmowanie:
 
 ``` haskell
   m - Zero  = m
-  S m - S n = m - n           
+  S m - S n = m - n
 ```
 
 Zauważmy, że znów użwamy rekursji po obu argumentach,
@@ -87,11 +91,11 @@ ale nie wszytkie kombinacje wzorców są użyte.
 
 Na liczbach naturalnych, odejmowanie jest funkcją częściową:
 
-```
+``` haskell
   S Zero - S(S Zero)
-= { (-).2 }
+= {- (-).2 -}
   Zero - S Zero
-= { wyczerpanie przypadków }
+= {- wyczerpanie przypadków -}
   ⊥
 ```
 
@@ -105,13 +109,13 @@ ghci> S Zero - S(S Zero)
 
 Na pierwszy rzut oka wydaje się, że do typu Nat należą wartości odpowiadające liczbom naturalnym:
 
-```
+``` haskell
 Zero, S Zero, S(S Zero), ...
 ```
 
 W rzeczywistości należy do niego także ⊥, ale na tym nie koniec
 
-```
+``` haskell
 ⊥, S ⊥, S(S ⊥), ...
 ```
 
@@ -157,13 +161,16 @@ jak zobaczymy, ta sama zasada znajduje zastosowanie dla innych typów.
 
 Klasyczna zasada indukcji obowiązuje dla właściwych liczb naturalnych.
 Jeśli chcemy wnioskować o wartościach częściowych, trzeba wykazać,
-że rozwazana własność zachodzi też dla  `⊥`
+że rozważana własność zachodzi też dla  `⊥`
 
 
      P(⊥)   P(Zero)   ∀n.P(n) → P(S n)
     ————————————————————————————————————
                ∀n.P(n)
 
+(aby wykazać `P(∞)` trzeba użyć indukcji pozaskończonej; potrzebna przesłanka `∀n<∞ P(n)`  jest konkluzją klasycznej indukcji).
+
+Tym niemniej w zasadzie ograniczamy się do wartości skończonych.
 
 ### Lemat 1
 
@@ -174,47 +181,54 @@ add m (S n) = S(add m n)  -- add.2
 ```
 Spróbujemy teraz udowodnić, ze nasze dodawanie jest przemienne. Zaczniemy od dwóch prostych lematów:
 
-**Lemat 1** 
+**Lemat 1**
 
-$P(n) \equiv  Zero + n = n$ (to nie jest trywialne, bo  w `add` rekurencja po drugim argumencie). 
+$P(n) \equiv  Zero + n = n$ (to nie jest trywialne, bo  w `add` rekurencja po drugim argumencie).
 
 - $P(Zero) \equiv Zero + Zero = Zero$ - z pierwszego równania (`add.1`)
 
 - Załóżmy, P(n), czyli `Zero + n = n` (IH); pokażemy `Zero + S n = S n`:
 
-```
+``` haskell
   add Zero (S n)
-= { add.2 }
+= {- add.2 -}
   S(add Zero n)
-= { IH }
+= {- IH -}
   S n
 ```
 $\Box$
 
 ### Lemat 2
 
+``` haskell
+add :: Nat -> Nat -> Nat
+add m Zero  = m           -- add.1
+add m (S n) = S(add m n)  -- add.2
+```
+
+
 $S\ m + n = S(m + n)$
 
 Dowód przez indukcję po $n$:
 
-- krok podstawowy 
-```
-   S m + Zero 
-=  { add.1 } 
+- krok podstawowy
+``` haskell
+   S m + Zero
+=  {- add.1 -}
    S m
-=  { add.1 wspak }
+=  {- add.1 wspak -}
    S (m + Zero)
 ```
 - krok indukcyjny: załóżmy $P(n) \equiv  S\ m + n = S(m + n)$ (IH),
 pokażemy P(S n): `S m + S n = S(m + S n)`
 
-```
+``` haskell
   S m + S n
-= { add.2 }
+= {- add.2 -}
   S(S m + n)
-= { IH }
+= {- IH, kongruencja -}
   S(S(m + n))
-= { add.2 wspak }
+= {- add.2 wspak -}
   S(m + S n)
 ```
 $\Box$
@@ -226,17 +240,21 @@ $$ \forall m\, n.m + n = n + m $$
 Dowód przez indukcję po $n$:
 
 - krok podstawowy:
-```
-  m + Zero ={ add }= m ={ Lemat 1 }= Zero + m
+``` haskell
+  m + Zero
+= {- add.1 -}
+  m
+= {- Lemat 1 -}
+  Zero + m
 ```
 - krok indukcyjny
-```
+``` haskell
   m + S n
-= { add }
+= {- add.2 -}
   S(m + n)
-= { IH }
+= {- IH -}
   S(n + m)
-= { Lemat 2}
+= {- Lemat 2 -}
   S n + m
 ```
 $\Box$
@@ -251,8 +269,6 @@ Zatem może postawmy mniej oczywiste pytania:
 - czy zawsze $\bot \geq n = n \leq \bot$ ?
 - czy zawsze `infinity + n = n + infinity` ?
 
-Wrócimy do nich jeszcze przy omawianiu leniwej ewaluacji.
-
 Na razie jednak skupiamy się na wartościach właściwych.
 
 ## Synteza programów
@@ -262,27 +278,27 @@ Zobaczmy teraz, że poznane metody można wykorzystać także do syntezy program
 Odejmowanie możemy wyspecyfikować jako odwrotność dodawania:
 
 ```
-(m + n) - n = m
+(m + y) - y = m
 ```
 
-Przy pomocy indukcji skonstruujemy funkcję `(−)` dla tej specyfikacji:
+Przy pomocy indukcji skonstruujemy funkcję `(−)` dla tej specyfikacji
 
 ### Synteza odejmowania
-Specyfikacja: `(m + n) - n = m`
+Specyfikacja: `(m + y) - y = m`
 
-- Przypadek podstawowy: `Zero`
+- Przypadek podstawowy:
 
 ``` haskell
-  (m + Zero) - Zero = m
+  (m + Zero) - Zero = m {- specyfikacja dla y = Zero -}
   {- add.1 -}
   m - Zero = m
 ```
 
 to ostatnie równanie możemy przyjąć jako część definicji funkcji
 
-- Przypadek inukcyjny: `S n`
+- Przypadek indukcyjny:
 ``` haskell
-(m + S n) - S n = m
+(m + S n) - S n = m  {- specyfikacja dla y = S n -}
 {- add.2 -}
 S(m + n) - S n = n
 {- IH: (m + n) - n = m -}
@@ -319,18 +335,18 @@ Teraz mamy
 
 ``` haskell
 m + n = foldn S m n             -- krócej: (+) = foldn S
-m * n = foldn (+m) Zero n       
+m * n = foldn (+m) Zero n
 m ^ n = foldn (*m) (S Zero) n
 ```
 
-Zauwazmy też, że `fold S Zero = id`
+Zauważmy też, że `fold S Zero = id`
 
 ### Zalety fold
 
 - zwięzłość zapisu
 - możliwości optymalizacji
 
-Zamiast żmudnie dowodzić przez indukcję w,łasności funkcji rekurencyjnych,<br />
+Zamiast żmudnie dowodzić przez indukcję własności funkcji rekurencyjnych,<br />
 wystarczy raz udowodnić własności `fold` a potem z nich skorzystać.
 
 Dla liczb naturalnych nie wygląda to może imponująco, ale analogiczne funkcje można zdefiniowac dla innych typów rekurencyjnych <br />
@@ -343,24 +359,31 @@ Dla przykładu udowodnimy teraz następujące prawo fuzji:
 
 
 jeśli `f a = b` oraz `f . g = h . f`, to
-```
+``` haskell
 f . foldn g a = foldn h b
 ```
 
 Na przykład aby pokazać nasz Lemat 1: `Zero + n = n`  czyli (pamiętając, że `foldn S Zero n = n`)
 
-```
+``` haskell
 (Zero +) . foldn S Zero = foldn S Zero
 ```
-przy pomocy prawa fuzji, wystarczy (`f = (Zero+); g = h = S`)
+przy pomocy prawa fuzji, wystarczy pokazać (`f = (Zero+); g = h = S`; a = b = Zero)
 
+``` haskell
+f a = (Zero+) Zero = Zero + Zero = Zero = b
+
+(f . g) n =     {- f, g, (.) -}
+(Zero+)(S n) =  {- (x+) -}
+Zero + S n =    {- (+)  -}
+S(Zero + n)     {- (x+) -}
+= S((Zero+) n)) {- h, f, (.) -}
+= (h . f) n
 ```
-Zero + Zero = Zero         -- f a = b
-Zero + S n = S(Zero + n)   -- f . g = h . f
-```
-co wynika trywialnie z definicji dodawania.
 
 Analogicznie możemy pokazać, że `(S Zero)` jest elementem neutralnym mnożenia.
+
+Uwaga: dla własności częsciowych prawo fuzji wymaga dodatkowo aby funkcja `f` była pedantyczna.
 
 ### Dowód prawa fuzji
 ``` haskell
@@ -368,21 +391,21 @@ foldn h c Zero  = c
 foldn h c (S n) = h(foldn h c n)
 ```
 jeśli `f a = b` oraz `f . g = h . f`, to
-```
+``` haskell
 f . foldn g a = foldn h b
 ```
 Przypadek (⊥):
 
-```
-LHS = f(foldn g a ⊥) ={ brak przypadku }= f ⊥
+``` haskell
+LHS = f(foldn g a ⊥) {- case -} f ⊥
 RHS = foldn h b ⊥ = ⊥
 ```
 teza zachodzi gdy `f` jest pedantyczna.
 
 Przypadek (`Zero`):
 
-```
-LHS = f(foldn g a Zero) ={ foldn.1 }=  f a
+``` haskell
+LHS = f(foldn g a Zero) {- foldn.1 -}  f a
 RHS = foldn h b Zero = b
 ```
 teza zachodzi gdy `f a = b`
@@ -393,15 +416,30 @@ foldn h c Zero  = c
 foldn h c (S n) = h(foldn h c n)
 ```
 jeśli `f a = b` oraz `f . g = h . f`, to
-```
+
+``` haskell
 f . foldn g a = foldn h b
 ```
+
 Przypadek indukcyjny:
-```
+``` haskell
 IH:  f(foldn g a n) = foldn h b n
 
-LHS: f(foldn g a (S n)) ={ foldn.2 }= f(g(foldn g a n))
-RHS: foldn h b (S n) ={ foldn.2 }= h(foldn h b n) ={ IH wspak }= h(f(foldn g a n))
+LHS:
+  f(foldn g a (S n))
+= {- foldn.2 -}
+  f(g(foldn g a n))
+= {- (.) -}
+  (f . g) (foldn g a n)
+
+RHS:
+  foldn h b (S n)
+= {- foldn.2 -}
+  h(foldn h b n)
+= {- IH wspak -}
+  h(f(foldn g a n))
+= {- (.) -}
+  (h . f) (foldn g a n)
 ```
 Teza zachodzi gdy `f . g = h . f`
 
@@ -436,16 +474,16 @@ Pokażemy teraz, że konkatenacja jest łączna oraz `[]` jest jej elementem neu
 
 Pokażemy `xs ++ [] = xs` przez indukcję po `xs`:
 
-1. gdy `xs = ⊥` istotnie `⊥ ++ [] = ⊥` 
+1. gdy `xs = ⊥` istotnie `⊥ ++ [] = ⊥`
 2. `xs = []` - trywialnie z definicji `[] ++ [] = []`
-3. Krok indukcyjny, załóżmy  IH: `xs ++ [] = xs`, 
+3. Krok indukcyjny, załóżmy  IH: `xs ++ [] = xs`,<br/>
 wykażemy `(x:xs) ++ [] = x:xs`
 
-    ```
+    ``` haskell
     (x:xs) ++ []
-    = { ++.2 }
+    = {- ++.2 -}
     x:(xs++[])
-    = { IH }
+    = {- IH -}
     x : xs
     ```
 
@@ -457,18 +495,18 @@ QED.
 (xs ++ ys) ++ zs = xs ++ (ys ++ zs)
 ```
 
-Szkic kroku indukcyjnego: 
+Szkic kroku indukcyjnego:
 
-```
+``` haskell
   ((x:xs) ++ ys) ++ zs
-=  { ++.2 }
+=  {- ++.2 -}
    (x:(xs ++ ys)) ++ zs
-=  { ++.2}
+=  {- ++.2 -}
     x:((xs ++ ys) ++ zs)
-=  { IH }
+=  {- IH -}
     x:(xs ++ (ys ++ zs))
-=  { ++.2, symetria }
-    (x:xs) ++ (ys++ zs)
+=  {- ++.2 wspak  -}
+    (x:xs) ++ (ys ++ zs)
 ```
 
 Szczegóły do uzupełnienia na ćwiczeniach.
@@ -479,7 +517,7 @@ Kolejną ważną funkcją jest `reverse`, która odwraca kolejność elementów.
 
 Jej naiwna implementacja
 
-``` haskell 
+``` haskell
 reverse :: [a] -> [a]
 reverse [] = []
 reverse (x:xs) = reverse xs ++ [x]
@@ -487,14 +525,14 @@ reverse (x:xs) = reverse xs ++ [x]
 
 ma złożoność $O(n^2)$. Później wyprowadzimy lepszą wersję.
 
-Na razie udowodnijmy
+Na razie udowodnimy
 
-```
+``` haskell
 reverse(xs ++ ys) = reverse ys ++ reverse xs
 reverse(reverse xs) = xs
 ```
 
-(na ćwiczeniach?)
+(na ćwiczeniach)
 
 ### map
 
@@ -509,13 +547,13 @@ map f (x:xs) = f x : map f xs
 
 Własności:
 
-```
+``` haskell
 map id = id
 map (f . g) = map f . map g
 map f (xs ++ ys) = map f xs ++ map f ys
 ```
 
-```
+``` haskell
 map f . tail = tail . map f
 map f . reverse = reverse . map f
 map f . concat = concat . map (map f)
@@ -549,11 +587,12 @@ filter p . concat = concat . map(filter p)
 Udowodnij, że `filter p (xs ++ ys) = filter p xs ++ filter p ys`.
 Nie używaj indukcji.
 
+
+Szkic, do uzupełnienia na ćwiczeniach:
 ``` haskell
   filter p (xs ++ ys)
 = filter p (concat [xs, ys])
 = concat(map filter p [xs, ys])
-= concat[filter p xs, filter p ys]
 = filter p xs ++ filter p ys
 ```
 
@@ -611,7 +650,7 @@ W drugim przypadku jednak jest to istotne (po przestawieniu nawiasów często ty
 
 ### Zwijanie w lewo - foldl
 
-Funkcja `foldl` jest podobna do `foldr` ztrym, że grupuje elementy listy w lewą stronę:
+Funkcja `foldl` jest podobna do `foldr` z tym, że grupuje elementy listy w lewą stronę:
 
 ``` haskell
 foldl :: (b -> a -> b) -> b -> [a] -> b
@@ -619,7 +658,7 @@ foldl f e []     = e
 foldl f e (x:xs) = foldl f (f e x) xs
 ```
 
-zamienia listę `x1:(x2:(x3:...xn:[]))` 
+zamienia listę `x1:(x2:(x3:...xn:[]))`
 na wartość `(((e ⊕ x1)⊕x2)⊕x3)⊕...xn))`.
 
 
@@ -677,6 +716,44 @@ Tymczasem jest inaczej:
 - po drugie kompilator potrafi wykryć takie sytuacje i całkowicie wyeliminować listę.
 - w efekcie zostanie wydajna funkcja działająca tylko na liczbach
 
+## foldr/build
+Efektem wykonania `foldr k z xs` jest zastąpienie każdego `(:)` przez `k` i koncowego `[]`  przez `z`:
+
+``` haskell
+foldr k z [x1...xn] = x1 `k` ... xn `k` z
+```
+
+Dualnie, możemy uogólnić funkcje tworzące listy:
+
+``` haskell
+build g = g (:) []
+```
+
+Wtedy zachodzi następująca równość (foldr/build)
+
+``` haskell
+foldr k z (build g) = g k z
+```
+
+Na przykład zdefiniujmy funkcję (podobną do [a..b]):
+
+``` haskell
+from a b = if a>b then [] else a : (from (a+1) b)
+```
+
+Abstrahując (:) i [] otrzymamy
+``` haskell
+from' a b = λc n -> if a>b then n else c a (from' (a+1) b)
+from a b = build (from' a b)
+```
+
+Teraz konsumpcja listy zbudowanej przez `from` może ulec deforestacji
+``` haskell
+product (from a b)              = {- product, from -}
+foldr (*) 1 (build (from' a b)) = {- foldr/build -}
+from' a b (*) 1
+```
+
 ### Deforestacja - przykład
 
 (z programu obliczającego liczbę związków organicznych pewnego rodzaju)
@@ -693,9 +770,10 @@ main = print (length (three_partitions 4000))
 ```
 Program tworzy ca 4 miliony krotek.
 
-Bez deforestacji alokuje ca 800M pamięci. 
+Bez deforestacji alokuje ca 800M pamięci.
 
 Dzięki zastosowaniu reguły `foldr/build`, tylko 50k (i działa 40-krotnie szybciej).
+
 
 ## Przykład wyprowadzania implementacji - lepsze reverse
 
@@ -727,7 +805,7 @@ revA xs ys = rev xs ++ ys
 Wyprowadzenie dla listy pustej:
 
 ``` haskell
-revA [] ys   = 
+revA [] ys   =
 rev [] ++ ys =
 [] ++ ys = ys
 ```
@@ -735,7 +813,7 @@ Wyprowadzenie dla listy niepustej:
 ``` haskell
 revA (x:xs) ys   =
 rev (x:xs) ++ ys =
-(rev xs ++ [x]) ++ ys = 
+(rev xs ++ [x]) ++ ys =
 rev xs ++ ([x] ++ ys) =
 rev xs ++ (x:ys) =
 revA xs (x:ys)
@@ -751,7 +829,7 @@ revA (x:xs) ys = revA xs (x:ys)
 ```
 
 która ma złożoność liniową zwn długość pierwszego argumentu.
-W związku z tym 
+W związku z tym
 
 ``` haskell
 reverse xs = revA xs []
@@ -794,7 +872,7 @@ to `foldr (⊕) e xs = foldl (⊗) e xs`
 Na przykład
 ``` haskell
 reverse = foldr snoc [] where snoc x xs = xs ++ [x]
-reverse = foldl cons [] where cons xs x = [x] ++ xs 
+reverse = foldl cons [] where cons xs x = [x] ++ xs
 ```
 3. Dla wszystkich skończonych list `xs`
 ``` haskell
@@ -804,37 +882,6 @@ foldl g e xs = foldr (flip g) e (reverse xs) -- konsekwencja
 Na przykład
 ``` haskell
 id = foldr (:) [] xs = foldl (flip(:)) [] (reverse xs) = reverse(reverse xs)
-```
-### Fuzja
-
-1. **foldr:** niech `f` pedantyczna, `f a = b` oraz `f(g x y) = h x (f y)`; wtedy
-``` haskell
-f . foldr g a = foldr h b
-```
-2. **foldl:** niech `f` pedantyczna, `f a = b` oraz `f(g x y) = h (f x) y)`; wtedy
-``` haskell
-f . foldl g a = foldl h b
-```
-3. **foldr/map:** (konsekwencja fuzji dla `foldr` oraz równości `map g = foldr (:).g`)
-``` haskell
-foldr f a . map g = foldr (f . g) a
-map f . map g = map (f .g)
-```
-4. **foldr/concat:**
-``` haskell
-foldr f a . concat = foldr (flip (foldr f)) a
-```
-
-5. niech `f` łączne z elementem neutralnym `e`; wtedy
-
-``` haskell
-foldr f e . concat = foldr f e . map (foldr f e)
-```
-na przykład
-
-``` haskell
-sum . concat = sum . map sum
-concat . concat = concat . map concat
 ```
 
 # Klasy, metody i własności
@@ -849,7 +896,7 @@ czy
 
 ``` haskell
 foo :: Functor f => (a->b) -> f a -> f b
-foo f x = fmap f . fmap id 
+foo f x = fmap f . fmap id
 ```
 
 dla podobnej funkcji na listach
@@ -954,7 +1001,7 @@ x <*> (y <*> z) = (pure (.) <*> x <*> y) <*> z   -- composition
 
 Ponadto mamy `fmap f x = pure f <*> x`.
 
-Jeśli mamy też instancję Monad, to dodatkowo powinno zachodzić 
+Jeśli mamy też instancję Monad, to dodatkowo powinno zachodzić
 
 ``` haskell
 pure = return
@@ -982,3 +1029,129 @@ instance Applicative Maybe where
   _        <*> Nothing  = Nothing
   (Just f) <*> (Just x) = Just (f x)
 ```
+
+# Pytania?
+
+# Bonus
+
+### Fuzja
+
+1. **foldr:** niech `f` pedantyczna, `f a = b` oraz `f(g x y) = h x (f y)`; wtedy
+``` haskell
+f . foldr g a = foldr h b
+```
+2. **foldl:** niech `f` pedantyczna, `f a = b` oraz `f(g x y) = h (f x) y)`; wtedy
+``` haskell
+f . foldl g a = foldl h b
+```
+3. **foldr/map:** (konsekwencja fuzji dla `foldr` oraz równości `map g = foldr (:).g`)
+``` haskell
+foldr f a . map g = foldr (f . g) a
+map f . map g = map (f .g)
+```
+4. **foldr/concat:**
+``` haskell
+foldr f a . concat = foldr (flip (foldr f)) a
+```
+
+5. niech `f` łączne z elementem neutralnym `e`; wtedy
+
+``` haskell
+foldr f e . concat = foldr f e . map (foldr f e)
+```
+na przykład
+
+``` haskell
+sum . concat = sum . map sum
+concat . concat = concat . map concat
+```
+
+## Uniwersalność foldr
+
+Dla funkcji na listach, równość `g = foldr f v` zachodzi wtedy i tylko wtedy gdy
+
+``` haskell
+g [] = v
+g (x:xs) = f x (g xs)
+```
+
+Na przykład pierwsze prawo fuzji:
+
+``` haskell
+f . foldr g a = foldr h b
+```
+
+jest równoważne warunkom
+
+```
+(f . foldr g a) [] = b    -- f a = b
+(f . foldr g a) (x:xs) = h x ((f . foldr g a) xs
+-- wynika z f(g x y) = h x (f y) dla y = foldr g a xs
+```
+
+### suml
+
+Zanim zajmiemy się foldl spójrzmy na konkretny przykład: sumowanie listy od lewej:
+
+
+``` haskell
+suml :: [Int] → Int
+suml xs = suml' xs 0 where
+  suml' :: [Int] -> (Int -> Int)
+  suml'   [ ] n = n
+  suml'  (x : xs) n = suml' xs (n + x)
+```
+
+Aby wyrazić `suml'` przy pomocy `foldr` potrzeba znaleźć f, v takie aby
+
+``` haskell
+suml' [] = v                   -- v :: Int -> Int
+suml' (x:xs) = f x (suml' xs)
+```
+
+Z pierwszego równania widać `v = id`; z drugiego obliczymy f:
+
+``` haskell
+    suml' (x:xs) = f x (suml' xs)
+<=> {- aplikacja do n -}
+    suml' (x:xs) n = f x (suml' xs) n
+<=> {- definicja suml' -}
+    suml' xs (n+x) = f x (suml' xs) n
+<=  {- uogólnienie (suml' xs) do g -}
+    g (n+x) = f x g n
+<=> {- abstrakcja -}
+    f = \x g -> (\n -> g (n+x))
+```
+
+Zatem
+
+``` haskell
+suml' = foldr (\x g -> (\n -> g (n+x))) id
+```
+
+
+### foldl via foldr
+
+Zdefiniowaliśmy
+
+``` haskell
+suml :: [Int] → Int
+suml xs = foldr (\x g -> (\n -> g (n+x))) id xs 0
+```
+
+W podobny sposób mozemy wyliczyć jak wyrazić
+
+``` haskell
+foldl :: (b -> a -> b) -> b -> [a] -> b
+foldl f v []     = v
+foldl f v (x:xs) = foldl f (f v x) xs
+```
+
+przy pomocy foldr:
+
+``` haskell
+foldl f v xs = foldr (\x g -> (\a -> g  (f a x))) id xs v
+```
+
+W drugą stronę, zdefiniowanie foldr  przy pomocy foldr nie jest możliwe,<br/>
+chociażby dlatego, że foldl jest pedantyczna zwn ogon listy, a foldr nie.
