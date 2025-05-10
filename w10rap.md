@@ -236,7 +236,8 @@ $\Box$
 ###  Przemienność dodawania
 **Twierdzenie**
 
-$$ \forall m\, n.m + n = n + m $$
+$\forall m\, n.\ m + n = n + m$
+
 Dowód przez indukcję po $n$:
 
 - krok podstawowy:
