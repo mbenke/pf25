@@ -152,5 +152,5 @@ mx >>= return     =  mx
 instance Monad Maybe where
   return         = Just
   Nothing  >>= f = Nothing
-  (Just x) >>= f = Just (f x)
+  (Just x) >>= f = f x
 ```
