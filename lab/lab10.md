@@ -4,12 +4,12 @@
 data Nat = Zero | S Nat deriving Show
 
 add :: Nat -> Nat -> Nat
-add m Zero = Zero
+add m Zero = m
 add m (S n) = S(add m n)
 
 mul :: Nat -> Nat -> Nat
 mul m Zero = Zero
-mul m (S n) = add (mul m n) n
+mul m (S n) = add (mul m n) m
 ```
 
 ## Wnioskowanie
@@ -18,7 +18,6 @@ Udowodnij:
 - `(S Zero)` jest elementem neutralnym mnożenia
 - łączność dodawania/mnożenia
 - rozdzielność mnożenia względem dodawania: `k*(m+n) = k*m + k*n`
-
 
 ## Konstrukcja programów
 
