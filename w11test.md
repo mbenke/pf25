@@ -2,20 +2,17 @@
 title: Programowanie Funkcyjne
 subtitle: Testowanie
 author:  Marcin Benke
-date: Wykład 10, 2025
+date: Wykład 11, 26 maja 2025
 ---
 
-<meta name="duration" content="80" />
 
 # Testowanie programów w Haskellu
 * doctest [github: sol/doctest](https://github.com/sol/doctest)
 * HUnit
 * Quickcheck
 * QuickCheck + doctest
-<!-- * Hedgehog [github: hedgehogqa/haskell-hedgehog](https://github.com/hedgehogqa/haskell-hedgehog)
--->
 
-# doctest
+## doctest
 Przykłady w dokumentacji mogą być użyte jako testy regresji
 
 ``` {.haskell }
@@ -42,7 +39,7 @@ Examples: 2  Tried: 2  Errors: 0  Failures: 1
 ```
 
 
-# Dygresja  - Haddock
+### Dygresja - Haddock
 
 Haddock (<http://haskell.org/haddock>) jest powszechnie uzywanym narzedziem do tworzenia dokumentacji.
 
@@ -61,45 +58,107 @@ $ haddock --html Square.hs
 ```
 
 
-# Przykład z BNFC
+### Przykład
 ``` {.haskell}
--- | Generate a name in the given case style taking into account the reserved
--- word of the language.
--- >>> mkName [] SnakeCase "FooBAR"
--- "foo_bar"
--- >>> mkName [] CamelCase "FooBAR"
--- "FooBAR"
--- >>> mkName [] CamelCase "Foo_bar"
--- "FooBar"
--- >>> mkName ["foobar"] LowerCase "FooBAR"
--- "foobar_"
-mkName :: [String] -> NameStyle -> String -> String
-mkName reserved style s = ...
+module Fib where
+
+-- | Compute Fibonacci numbers
+--
+-- Examples:
+--
+-- >>> fib 10
+-- 55
+--
+-- >>> fib 5
+-- 5
+
+fib :: Int -> Integer
+fib n = fibs !! n where fibs = 1 : 1 : zipWith (+) fibs (drop 1 fibs)
 ```
 
-# HUnit
+```
+-- fib.cabal
+cabal-version: 1.12
+name:           fib
+version:        0.0.0
+build-type: Simple
+
+library
+  build-depends: base == 4.*
+  hs-source-dirs: src
+  exposed-modules: Fib
+```
+
+
+```
+$ cabal repl --with-compiler=doctest
+
+src/Fib.hs:8: failure in expression `fib 10'
+expected: 55
+ but got: 89
+          ^
+
+Examples: 2  Tried: 1  Errors: 0  Failures: 1
+```
+
+## HUnit
 
 Podobnie jak w innych językach, w Haskellu możemy stosowac testy jednostkowe, np.
 
-~~~~ {.haskell}
-import Test.HUnit
-import MyArray
+``` haskell
+import Fib
+import Test.Tasty
+import Test.Tasty.HUnit
 
-main = runTestTT tests
+main = defaultMain $ testGroup "Unit tests" [test1,test2]
 
-tests = TestList [test1,test2]
+test1 = testCase "fib 3 = fib 1 + fib 2" $ fib 3 @?= fib 1 + fib 2
+test2 = testCase "fib 10 = 55"           $ fib 10 @?= 55
+```
 
-listArray1 es = listArray (1,length es) es
-test1 = TestCase$assertEqual "a!2 = 2" (listArray1 [1..3] ! 2) 2
-test2 = TestCase$assertEqual "elems . array = id"
-                             (elems $ listArray1 [1..3]) [1..3]
-~~~~
+```
+$ cabal test
+Test suite fib-tests: RUNNING...
+Unit tests
+  fib 3 = fib 1 + fib 2: OK
+  fib 10 = 55:           FAIL
+    test/Test.hs:10:
+    expected: 55
+     but got: 89
+    Use -p '/fib 10 = 55/' to rerun this test only.
 
-~~~~
-> main
-Cases: 2  Tried: 2  Errors: 0  Failures: 0
-Counts {cases = 2, tried = 2, errors = 0, failures = 0}
-~~~~
+1 out of 2 tests failed (0.00s)
+```
+
+
+### `cabal test`
+
+``` cabal
+-- fib.cabal
+cabal-version: 1.12
+name:           fib
+version:        0.0.0
+build-type: Simple
+
+library
+  build-depends: base == 4.*
+  hs-source-dirs: src
+  exposed-modules: Fib
+  default-language: Haskell2010
+
+test-suite fib-tests
+
+  type: exitcode-stdio-1.0
+  hs-source-dirs: test
+  default-language: Haskell2010
+
+  main-is: Test.hs
+
+  build-depends: base == 4.*
+               , fib
+               , tasty
+               , tasty-hunit
+```
 
 # Posortujmy listę
 
@@ -149,7 +208,7 @@ Oczywista wlasność sortowania:
 prop_idempotent = sort . sort == sort
 ~~~~
 
-ni jest definiowalna - nie umiemy porównywać funkcji.
+nie jest definiowalna — nie umiemy porównywać funkcji.
 
 Możemy porównywać funkcje dla wybranych argumentów:
 
@@ -190,6 +249,8 @@ prop_permute' prop xs = forAll (permutations xs) prop
   where forAll = flip all
 ```
 
+Możemy teraz zaimplementować sprytniejsze `forAll`.
+
 # QuickCheck
 
 * Generowanie wielu testów jednostkowych jest nudne
@@ -203,7 +264,7 @@ prop_permute' prop xs = forAll (permutations xs) prop
 ~~~~
 
 
-QuickCheck wygenerował 100 losowych list i sprawdził, ze dal nich własność `prop_idempotent` zachodzi  
+QuickCheck wygenerował 100 losowych list i sprawdził, ze dla nich własność `prop_idempotent` zachodzi
 
 Oczywiście 100 nie jest magiczne:
 
@@ -212,7 +273,7 @@ Oczywiście 100 nie jest magiczne:
 +++ OK, passed 1000 tests.
 ~~~~
 
-NB: ponieważ generowanie losowych "wartości polimorficznych" jest trudne, musimy nadać własnościom typ monomorficzny, np. 
+NB: ponieważ generowanie losowych "wartości polimorficznych" jest trudne, musimy nadać własnościom typ monomorficzny, np.
 
 ``` haskell
 prop_idempotent :: [Int] -> Bool
@@ -222,35 +283,295 @@ prop_idempotent :: [Int] -> Bool
 
 ## Przykład
 
+
 ``` haskell
 import Test.QuickCheck
+
+prop_iadd_comm :: Int -> Int -> Bool
+prop_iadd_comm a b = a + b == b + a
+
+prop_iadd_assoc :: Int -> Int -> Int -> Bool
+prop_iadd_assoc a b c = (a + b) + c  == a + (b + c)
+
+ghci> quickCheck prop_iadd_comm
++++ OK, passed 100 tests.
+
+ghci> quickCheckWith stdArgs {maxSuccess = 1000} prop_iadd_comm
++++ OK, passed 1000 tests.
+
+ghci> quickCheck prop_iadd_assoc
++++ OK, passed 100 tests.
+```
+
+
+* definiujemy własności, które mają być przetestowane - w przybliżeniu: funkcje o typie wyniku `Bool`,
+dokładniej  - typu, który należy do klasy `Testable`;
+* QuickCheck losuje pewną próbę danych
+i sprawdza, czy dla wszystkich własność jest spełniona;
+* Istnieją standardowe generatory dla typów wbudowanych, dla własnych typów trzeba je zdefiniować.
+
+## Niespodzianka
+
+``` haskell
+import Test.QuickCheck
+
 
 prop_fadd_comm :: Float -> Float -> Bool
 prop_fadd_comm a b = a + b == b + a
 
 prop_fadd_assoc :: Float -> Float -> Float -> Bool
 prop_fadd_assoc a b c = (a + b) + c  == a + (b + c)
-```
 
 
-```
-λ> quickCheck prop_fadd_com
+ghci> quickCheck prop_fadd_com
 +++ OK, passed 100 tests.
-λ> quickCheckWith stdArgs {maxSuccess = 1000} prop_fadd_comm
-+++ OK, passed 1000 tests.
-λ> quickCheck prop_fadd_assoc
+
+ghci> quickCheck prop_fadd_assoc
 *** Failed! Falsified (after 6 tests and 6 shrinks):
 1.0
 -1.95
 -2.06
 ```
- 
 
-* definiujemy własności, które mają być przetestowane - w przybliżeniu: funkcje o typie wyniku `Bool`, 
-dokładniej  - typu, który należy do klasy `Testable`;
-* QuickCheck losuje pewną próbę danych
-i sprawdza, czy dla wszystkich własność jest spełniona;
-* Istnieją standardowe generatory dla typów wbudowanych, dla własnych typów trzeba je zdefiniować.
+## forAll, Gen, arbitrary, shrink
+
+
+``` haskell
+class Arbitrary a where
+  arbitrary :: Gen a
+  shrink :: a -> [a]
+
+forAll :: (Show a, Testable b) => Gen a -> (a -> b) -> Property
+```
+
+- Gen jest monadą - obliczenia generujące ``losowe'' wartości
+- shrink mówi jak próbować zmniejszyć kontrprzykład
+
+# Implikacja (testy warunkowe)
+
+Implikacja: sprawdź własność q, pod warunkiem, że dane spełniają p
+
+~~~~ {.haskell}
+(==>) :: Testable a => Bool -> a -> Property
+True  ==> a = property a
+False ==> a = property () -- bad test data
+
+propMul1 :: Int -> Property
+propMul1 x = (x>0) ==> (2*x > 0)
+
+propMul2 :: Int -> Int -> Property
+propMul2 x y = (x>0) ==> (x*y > 0)
+~~~~
+
+~~~~
+
+> check = quickCheck
+
+> check propMul1
+OK, passed 100 tests
+
+> check propMul2
+Falsifiable, after 0 tests:
+2
+-2
+~~~~
+
+
+
+# Problem z implikacją
+
+~~~~
+prop_insert1 x xs = ordered (insert x xs)
+
+*Main Test.QuickCheck> quickCheck prop_insert1
+*** Failed! Falsifiable (after 6 tests and 7 shrinks):
+0
+[0,-1]
+~~~~
+
+...oczywiście...
+
+~~~~
+prop_insert2 x xs = ordered xs ==> ordered (insert x xs)
+
+>>> quickCheck prop_insert2
+*** Gave up! Passed only 75 tests; 1000 discarded tests.
+~~~~
+
+Prawdopodobieństwo, że losowa lista jest uporządkowana jest nikłe...
+
+# Rozkład przypadków testowych
+
+...a te, które są uporzadkowane, nie są zwykle zbyt przydatne:
+
+~~~~
+-- collect :: (Show a, Testable prop) => a -> prop -> Property
+-- Attaches a label to a test case. This is used for reporting test case distribution.
+
+prop_insert3 x xs = collect (length xs) $  ordered xs ==> ordered (insert x xs)
+
+>>> quickCheck prop_insert3
+*** Gave up! Passed only 37 tests:
+51% 0
+32% 1
+16% 2
+~~~~
+
+## Uruchomienie wszystkich testów w module:
+
+Przykład uruchomienia wszystkich testów QuickCheck w module:
+
+``` haskell
+-- Program obowiązkowy
+{-# LANGUAGE TemplateHaskell #-}
+import Test.QuickCheck
+
+-- nasze testy
+prop_AddCom3 :: Int -> Int -> Bool
+prop_AddCom3 x y = x + y == y + x
+
+prop_Mul1 :: Int -> Property
+prop_Mul1 x = (x>0) ==> (2*x > 0)
+
+-- tu dzieje się magia :)
+return []
+runTests = $quickCheckAll
+
+main = runTests
+```
+
+Efekt:
+```
+$ cabal run checkAll
+=== prop_AddCom3 from checkAll.hs:5 ===
++++ OK, passed 100 tests.
+
+=== prop_Mul1 from checkAll.hs:8 ===
++++ OK, passed 100 tests; 120 discarded.
+```
+
+## Czasem trzeba napisać własny generator
+
+* Zdefiniujmy nowy typ - list uporządkowanych
+
+~~~~
+newtype OrderedInts = OrderedInts [Int]
+
+instance Arbitrary OrderedInts where
+  arbitrary = OrderedInts . L.sort <$> (arbitrary :: Gen [Int])
+
+prop_insert4 :: Int -> OrderedInts -> Bool
+prop_insert4  x (OrderedInts xs) = ordered (insert x xs)
+
+>>> sample (arbitrary:: Gen OrderedInts)
+OrderedInts []
+OrderedInts [0,0]
+OrderedInts [-2,-1,2]
+OrderedInts [-4,-2,0,0,2,4]
+OrderedInts [-7,-6,-6,-5,-2,-1,5]
+OrderedInts [-13,-12,-11,-10,-10,-7,1,1,1,10]
+OrderedInts [-13,-10,-7,-5,-2,3,10,10,13]
+OrderedInts [-19,-4,26]
+OrderedInts [-63,-15,37]
+OrderedInts [-122,-53,-47,-43,-21,-19,29,53]
+~~~~
+
+<!--
+# Function properties
+
+~~~~ {.haskell}
+infix 4 ===
+(===)  f g x = f x == g x
+
+instance Show(a->b) where
+  show f = "<function>"
+
+propCompAssoc f g h = (f . g) . h === f . (g . h)
+  where types = [f,g,h::Int->Int]
+~~~~
+-->
+
+
+## Czasem trzeba napisać własny generator
+
+``` haskell
+data Nat = Zero | S Nat deriving(Eq, Ord, Show)
+
+instance Num Nat where ...
+
+instance Arbitrary Nat where
+    arbitrary = do
+      (n :: Integer) <- arbitrary
+      pure (fromInteger (abs n))
+
+    shrink Zero = []
+    shrink (S n) = n : shrink n
+```
+
+
+## Przykład
+
+``` haskell
+module Collatz where
+import Test.QuickCheck
+
+f :: Integer -> Integer
+f n | even n = n `div` 2
+    | odd n  = 3*n + 1
+
+collatz :: Integer -> Bool
+collatz(1) = True
+collatz(n) = collatz(f(n))
+
+checkCollatz = quickCheck (\n -> n > 0 ==> collatz(n))
+
+verboseCollatz = quickCheckWith stdArgs {maxSuccess = 3} $ verbose(\n -> n > 0 ==> collatz(n))
+```
+
+``` haskell
+ghci> checkCollatz
++++ OK, passed 100 tests; 99 discarded.
+
+ghci> verboseCollatz
+Skipped (precondition false):
+0
+...
+Passed:
+1
+Passed:
+28
+Skipped (precondition false):
+-65
+Passed:
+39
++++ OK, passed 3 tests; 11 discarded.
+```
+
+## Listy nieskończone
+
+Funkcja `cycle` powtarza swój argument "w kółko". Czy mozemy ją przetestować
+
+``` haskell
+prop_DoubleCycleBad :: [Int] -> Property
+prop_DoubleCycleBad xs =
+  not (null xs) ==>
+    cycle xs == cycle (xs ++ xs)
+```
+
+Tak oczywiście nie można, ale możemy testować skończone prefiksy:
+
+``` haskell
+prop_DoubleCycle :: [Int] -> Int -> Property
+prop_DoubleCycle xs n =
+  not (null xs) && (n>0) ==>
+    take n (cycle xs) == take n (cycle (xs ++ xs))
+
+ghci> quickCheck prop_DoubleCycle
++++ OK, passed 100 tests; 137 discarded.
+```
+
+## Testowanie funkcji
+
 
 ## Jak to działa?
 
@@ -274,62 +595,73 @@ instance (Arbitrary a, Show a, Testable b) => Testable (a -> b) where
 
 class Arbitrary a where
   arbitrary   :: Gen a
+  shrink      :: a -> [a]
 
 instance Monad Gen where ...
 ~~~~
 
 `Gen` jest monadą: `Gen t` jest obliczeniem dającym `t` (być może korzystającym z generatorów pseudolosowych)
 
-## Generacja liczb losowych
+
+### Przypomnienie - liczby pseudolosowe
+
+<!-- Haskell Programming s.875; NB deprecated next -->
 
 ``` haskell
+{- cabal:
+    build-depends: base, mtl, random
+-}
 import System.Random
-  ( StdGen       -- :: *
-  , newStdGen    -- :: IO StdGen
-  , randomR      -- :: (RandomGen g, Random a) => (a, a) -> g -> (a, g)
-  , split        -- :: RandomGen g => g -> (g, g)
-                 -- splits its argument into independent generators
-  -- class RandomGen where
-  --   next     :: g -> (Int, g)
-  --   split    :: g -> (g, g)
-  -- instance RandomGen StdGen
-  -- instance Random Int
-  )
 
-roll :: StdGen -> Int
-roll rnd = fst $ randomR (1,6) rnd
-main = do
-  rnd <- newStdGen
-  let (r1,r2) = split rnd
-  print (roll r1)
-  print (roll r2)
-  print (roll r1)
-  print (roll r2)
+roll :: StdGen -> (Int, StdGen)
+roll = uniformR (1, 6::Int)
+
+pureGen = mkStdGen 1
+
+rollD6 :: Int
+rollD6 = fst $ roll pureGen
+
+-- >>> pureGen
+-- StdGen {unStdGen = SMGen 12994781566227106604 10451216379200822465}
+-- roll pureGen
+-- (6,StdGen {unStdGen = SMGen 4999253871718377453 10451216379200822465})
+-- rollD6
+-- 6
 ```
 
-## Generacja liczb losowych
+na tej kostce zawsze wypada 6
+
+
+(oczywiście można użyć IO, ale wtedy się już od niego nie uwolnimy)
+
+
+### Rzuć 3d6
+
+Jak rzucić trzema kostkami?
 
 ``` haskell
-main = do
-  rnd <- newStdGen
-  let (r1,r2) = split rnd
-  print (roll r1)
-  print (roll r2)
-  print (roll r1)
-  print (roll r2)
+roll3D6 :: (Int, Int, Int)
+roll3D6 = do
+  let g0 = pureGen
+  let (r1, g1) = roll g0
+  let (r2, g2) = roll g1
+  let (r3, g3) = roll g2
+  (r1, r2, r3)
 ```
 
-```
-*Main System.Random> main
-4
-5
-4
-5
-```
+Zamiast jawnie przekazywać generator, możęmy użyć `State`:
 
-Samo `StdGen` jest czyste i daje za każdym razem ten sam wynik, dlatego zwykle opakowywane jest w odpowiednią monadę.
+``` haskell
+rollM :: State StdGen Int
+rollM = state roll        -- state :: (StdGen -> (a, StdGen)) -> State StdGen a;  roll :: StdGen -> (Int, StdGen)
 
-Nie będziemy w tym momencie wchodzić w szczegóły, ale w przypadku QuickCheck używamy `Gen`.
+roll3D6M' :: State StdGen (Int, Int, Int)
+roll3D6M' = do
+  r1 <- rollM
+  r2 <- rollM
+  r3 <- rollM
+  return (r1, r2, r3)
+```
 
 # Generowanie losowych danych
 
@@ -349,7 +681,7 @@ instance Arbitrary Colour where
 instance Arbitrary a => Arbitrary [a] where
     arbitrary = oneof [return [], (:) <$> arbitrary <*> arbitrary]
     -- NB to nie jest najlepszy generator dla list - jaka jest oczekiwana długość listy
-     
+
 generate :: Gen a -> IO a
 sample :: Show a => Gen a -> IO ()
 ```
@@ -359,7 +691,7 @@ $$ \sum_{n=0}^\infty {n\over 2^{n+1}} = 1 $$
 
 # Dopasowywanie rozkładu
 
-``` haskell 
+``` haskell
 frequency :: [(Int, Gen a)] -> Gen a  -- weighted distribution
 
 instance Arbitrary a => Arbitrary [a] where
@@ -391,10 +723,6 @@ $$ p = 1/2 $$
 ``` haskell
 -- Gen a bierze parametr rozmiaru oraz StdGen i daje a
 newtype Gen a = Gen (Int -> StdGen -> a)
-
-chooseInt1 :: (Int,Int) -> Gen Int
-chooseInt1 bounds = Gen $ \n r  -> fst (randomR bounds r)
--- randomR :: (Random a) => (a, a) -> StdGen -> (a, StdGen)
 
 -- | `sized` tworzy generator z rodziny generatorów indeksowanej rozmiarem
 sized :: (Int -> Gen a) -> Gen a
@@ -435,8 +763,9 @@ arbTree n = frequency
         ]
 ~~~~
 
-NB krótszy, zapis w komentarzu jest rónoważny;
+NB krótszy, zapis w komentarzu jest równoważny;
 `g` nie jest drzewem, ale obliczeniem produkującym drzewa
+
 
 # Monada generatorów
 
@@ -452,11 +781,11 @@ instance Monad Gen where
 instance Functor Gen where
   fmap f m = m >>= return . f
 
-chooseInt :: (Int,Int) -> Gen Int
-chooseInt bounds = (fst . randomR bounds) <$> rand
-
 rand :: Gen StdGen  -- like `get` in the state monad
 rand = Gen (\n r -> r)
+
+chooseInt :: (Int,Int) -> Gen Int
+chooseInt bounds = (fst . randomR bounds) <$> rand
 
 choose ::  Random a => (a, a) -> Gen a
 choose bounds = (fst . randomR bounds) <$> rand
@@ -511,7 +840,7 @@ newtype Property
 
 # Testable
 
-To test something, we need a `Result` generator (i.e. `Property`)
+Aby wykonać test, potrzebujemy generatora wyników (`Result`). Takim generatorem jest `Property`.
 
 ~~~~ {.haskell}
 class Testable a where
@@ -536,9 +865,9 @@ OK, passed 100 tests
 *SimpleCheck1> check False
 Falsifiable, after 0 tests:
 ~~~~
-(`False` has a trivial counterexample)
+(`False` ma trywialny kontrprzykład)
 
-# Running tests
+# Uruchamianie testów
 
 ~~~~ {.haskell}
 generate :: Int -> StdGen -> Gen a -> a
@@ -564,7 +893,7 @@ tests c gen rnd0 ntest nfail
       (rnd1,rnd2) = split rnd0
 ~~~~
 
-`configSize n` determines data size for test `n` (default: `n/2+3`)
+`configSize n` wyznacza rozmiar dla testu numer `n` (domyślnie: `n/2+3`)
 
 # forAll
 
@@ -597,9 +926,9 @@ Falsifiable, after 0 tests:
 1
 ~~~~
 
-# Functions
+# Funkcje
 
-Given `forAll`, functions are surprisingly easy:
+Mając `forAll`, funkcje są zaskakująco łatwe:
 
 ~~~~ {.haskell}
 instance (Arbitrary a, Show a, Testable b) => Testable (a -> b) where
@@ -612,262 +941,3 @@ propAddCom3 x y = x + y == y + x
 -- instance Testable (Int -> Bool)
 -- instance Testable (Int -> (Int -> Bool))
 ~~~~
-
-# Implication (conditional tests)
-
-Implication: test q, providing data satisfies p
-
-~~~~ {.haskell}
-(==>) :: Testable a => Bool -> a -> Property
-True  ==> a = property a
-False ==> a = property () -- bad test data
-
-propMul1 :: Int -> Property
-propMul1 x = (x>0) ==> (2*x > 0)
-
-propMul2 :: Int -> Int -> Property
-propMul2 x y = (x>0) ==> (x*y > 0)
-~~~~
-
-~~~~
-> check propMul1
-OK, passed 100 tests
-
-> check propMul2
-Falsifiable, after 0 tests:
-2
--2
-~~~~
-
-<!--
-# Generating functions
-
-We can test functions, but to test higher-order functons we need to generate random functions.
-
-
-Note that
-
-~~~~ {.haskell}
-Gen a ~ (Int -> StdGen -> a)
-Gen(a -> b) ≃ (Int -> StdGen -> a -> b) ≃ (a -> Int -> StdGen -> b) ≃ (a -> Gen b)
-~~~~
-
-so we can write
-
-~~~~ {.haskell}
-promote :: (a -> Gen b) -> Gen (a -> b)
-promote f = Gen (\n r -> \a -> let Gen m = f a in m n r)
-~~~~
-
-We can use `promote` to construct a function generator if we can create a generator family for results depending somehow on arguments
-
-# Coarbitrary
-
-We can describe this with a class:
-
-~~~~ {.haskell}
-class CoArbitrary a where
-  coarbitrary :: a -> Gen b -> Gen b
-~~~~
-
-`coarbitrary` produces a generator transformer from its argument
-
-Now we can use `Coarbitrary` to define `Arbitrary` instance for functions:
-
-~~~~ {.haskell}
-instance (CoArbitrary a, Arbitrary b) => Arbitrary(a->b) where
-  arbitrary = promote $ \a -> coarbitrary a arbitrary
-~~~~
-
-NB in QuickCheck v1.1 `coarbitrary` is a method of `Arbitrary`;
-v2 uses a different approach to function generation
-
-**Exercise:** write a few instances of `Arbitrary` for your types.
-
-# CoArbitrary instances
-
-To define CoArbitrary instances
-
-~~~~ {.haskell}
-class CoArbitrary where
-  coarbitrary :: a -> Gen b -> Gen b
-~~~~
-
-we need a way to construct generator transformers. Let us define the function
-
-~~~~ {.haskell}
-variant :: Int -> Gen a -> Gen a
-variant v (Gen m) = Gen (\n r -> m n (rands r !! (v+1)))
- where
-  rands r0 = r1 : rands r2 where (r1, r2) = split r0
-~~~~
-
-which splits the input generator into many variants and chooses one of them
-depending on the argument
-
-~~~~ {.haskell}
-instance CoArbitrary Bool where
-  coarbitrary False = variant 0
-  coarbitrary True  = variant 1
-~~~~
-
-# Example: coarbitrary for trees
-
-~~~~ {.haskell}
-instance Arbitrary Tree where
-  arbitrary = sized tree'
-    where tree' 0 = liftM Leaf arbitrary
-	  tree' n | n>0 =
-		oneof [liftM Leaf arbitrary,
-	          liftM2 Branch subtree subtree]
-  	    where subtree = tree' (n `div` 2)
-
-  coarbitrary (Leaf n) =
-	variant 0 . coarbitrary n  --
-	-- coarbitrary n :: Gen T -> Gen T
-	-- variant 0 :: Gen T -> Gen T
-
-  coarbitrary (Branch t1 t2) =
-	variant 1 . coarbitrary t1 . coarbitrary t2
-~~~~
-
-
-~~~
-variant :: Int -> Gen a -> Gen a
-coarbitrary :: a -> Gen b -> Gen b
-~~~
-
-
-# Function properties
-
-~~~~ {.haskell}
-infix 4 ===
-(===)  f g x = f x == g x
-
-instance Show(a->b) where
-  show f = "<function>"
-
-propCompAssoc f g h = (f . g) . h === f . (g . h)
-  where types = [f,g,h::Int->Int]
-~~~~
--->
-
-# A problem with implication
-
-~~~~
-prop_insert1 x xs = ordered (insert x xs)
-
-*Main Test.QuickCheck> quickCheck prop_insert1
-*** Failed! Falsifiable (after 6 tests and 7 shrinks):
-0
-[0,-1]
-~~~~
-
-...obviously...
-
-~~~~
-prop_insert2 x xs = ordered xs ==> ordered (insert x xs)
-
->>> quickCheck prop_insert2
-*** Gave up! Passed only 75 tests; 1000 discarded tests.
-~~~~
-
-Probability that a random list is ordered is small...
-
-# Test case distribution
-
-...and those which are, are usually not very useful
-
-~~~~
--- collect :: (Show a, Testable prop) => a -> prop -> Property
--- Attaches a label to a test case. This is used for reporting test case distribution.
-
-prop_insert3 x xs = collect (length xs) $  ordered xs ==> ordered (insert x xs)
-
->>> quickCheck prop_insert3
-*** Gave up! Passed only 37 tests:
-51% 0
-32% 1
-16% 2
-~~~~
-
-
-# Sometimes you need to write your own generator
-
-* Define a new type
-
-~~~~
-newtype OrderedInts = OrderedInts [Int]
-
-prop_insert4 :: Int -> OrderedInts -> Bool
-prop_insert4  x (OrderedInts xs) = ordered (insert x xs)
-
->>> sample (arbitrary:: Gen OrderedInts)
-OrderedInts []
-OrderedInts [0,0]
-OrderedInts [-2,-1,2]
-OrderedInts [-4,-2,0,0,2,4]
-OrderedInts [-7,-6,-6,-5,-2,-1,5]
-OrderedInts [-13,-12,-11,-10,-10,-7,1,1,1,10]
-OrderedInts [-13,-10,-7,-5,-2,3,10,10,13]
-OrderedInts [-19,-4,26]
-OrderedInts [-63,-15,37]
-OrderedInts [-122,-53,-47,-43,-21,-19,29,53]
-~~~~
-
-<!--
-# doctest + QuickCheck
-
-~~~~ {.haskell}
-module Fib where
-
--- $setup
--- >>> import Control.Applicative
--- >>> import Test.QuickCheck
--- >>> newtype Small = Small Int deriving Show
--- >>> instance Arbitrary Small where arbitrary = Small . (`mod` 10) <$> arbitrary
-
--- | Compute Fibonacci numbers
---
--- The following property holds:
---
--- prop> \(Small n) -> fib n == fib (n + 2) - fib (n + 1)
-fib :: Int -> Int
-fib 0 = 0
-fib 1 = 1
-fib n = fib (n - 1) + fib (n - 2)
-~~~~
-
-```
-stack install QuickCheck
-stack exec doctest Fib.hs
-Run from outside a project, using implicit global project config
-Using resolver: lts-9.21 from implicit global project's config file: /Users/ben/.stack/global/stack.yaml
-Examples: 5  Tried: 5  Errors: 0  Failures: 0
-```
--->
-
-# Running all tests in a module
-
-`quickCheckAll` tests all properties with names starting with `prop_` (and proper type).
-It uses TemplateHaskell.
-
-The next lecture will discuss how such functions work.
-
-Usage example
-
-``` haskell
-{-# LANGUAGE TemplateHaskell #-}
-import Test.QuickCheck
-
-prop_AddCom3 :: Int -> Int -> Bool
-prop_AddCom3 x y = x + y == y + x
-
-prop_Mul1 :: Int -> Property
-prop_Mul1 x = (x>0) ==> (2*x > 0)
-
-return []  -- tells TH to typecheck definitions above and insert an empty decl list
-runTests = $quickCheckAll
-
-main = runTests
-```
