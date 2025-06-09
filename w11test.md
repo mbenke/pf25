@@ -27,7 +27,7 @@ module DoctestExamples where
 
 ```
 (NB dla wykonania w VS Code wystarczy samo `-- >>>`, <br/> natomiast `doctest` wymaga także `-- |` powyżej, <br/>
-które jest elementem składni narzędzia dokumentacji [Haddock](https://haskell-haddock.readthedocs.io/en/latest/))
+które jest elementem składni narzędzia dokumentacji [Haddock](https://haskell-haddock.readthedocs.iolatest/))
 
 ```
 $ cabal install doctest
@@ -509,44 +509,6 @@ instance Arbitrary Nat where
 ```
 
 
-## Przykład
-
-``` haskell
-module Collatz where
-import Test.QuickCheck
-
-f :: Integer -> Integer
-f n | even n = n `div` 2
-    | odd n  = 3*n + 1
-
-collatz :: Integer -> Bool
-collatz(1) = True
-collatz(n) = collatz(f(n))
-
-checkCollatz = quickCheck (\n -> n > 0 ==> collatz(n))
-
-verboseCollatz = quickCheckWith stdArgs {maxSuccess = 3} $ verbose(\n -> n > 0 ==> collatz(n))
-```
-
-``` haskell
-ghci> checkCollatz
-+++ OK, passed 100 tests; 99 discarded.
-
-ghci> verboseCollatz
-Skipped (precondition false):
-0
-...
-Passed:
-1
-Passed:
-28
-Skipped (precondition false):
--65
-Passed:
-39
-+++ OK, passed 3 tests; 11 discarded.
-```
-
 ## Listy nieskończone
 
 Funkcja `cycle` powtarza swój argument "w kółko". Czy mozemy ją przetestować
@@ -569,8 +531,6 @@ prop_DoubleCycle xs n =
 ghci> quickCheck prop_DoubleCycle
 +++ OK, passed 100 tests; 137 discarded.
 ```
-
-## Testowanie funkcji
 
 
 ## Jak to działa?
@@ -941,3 +901,45 @@ propAddCom3 x y = x + y == y + x
 -- instance Testable (Int -> Bool)
 -- instance Testable (Int -> (Int -> Bool))
 ~~~~
+
+# Pytania?
+
+# Bonus
+
+## Przykład
+
+``` haskell
+module Collatz where
+import Test.QuickCheck
+
+f :: Integer -> Integer
+f n | even n = n `div` 2
+    | odd n  = 3*n + 1
+
+collatz :: Integer -> Bool
+collatz(1) = True
+collatz(n) = collatz(f(n))
+
+checkCollatz = quickCheck (\n -> n > 0 ==> collatz(n))
+
+verboseCollatz = quickCheckWith stdArgs {maxSuccess = 3} $ verbose(\n -> n > 0 ==> collatz(n))
+```
+
+``` haskell
+ghci> checkCollatz
++++ OK, passed 100 tests; 99 discarded.
+
+ghci> verboseCollatz
+Skipped (precondition false):
+0
+...
+Passed:
+1
+Passed:
+28
+Skipped (precondition false):
+-65
+Passed:
+39
++++ OK, passed 3 tests; 11 discarded.
+```
