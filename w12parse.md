@@ -2,7 +2,7 @@
 title: Programowanie Funkcyjne
 subtitle: Kombinatory parsujące
 author:  Marcin Benke
-date: Wykład 10/2025
+date: Wykład 12/2025
 ---
 
 
@@ -74,6 +74,8 @@ Parser ``konsumuje'' pewien prefiks wejścia aby odczytać **a**, oddaje niewyko
 
 Wynikiem działania jest lista możliwych odczytań (być może pusta).
 
+Phil Wadler: *How to replace failure by a list of successes*
+
 ## Parsery: stan + lista
 
 
@@ -101,6 +103,38 @@ instance Functor Parser where
 instance Monad Parser where
     -- (>>=) :: Parser a -> (a -> Parser b) -> Parser b
     (P p) >>= f = P $ \s -> concat [runP (f v) out | (v, out) <- p s]
+
+instance Applicative Parser where
+  pure a = P $ \s -> [(a, s)]
+
+  -- (<*>) :: Parser (a -> b) -> Parser a -> Parser b
+  pf <*> px = do { f <- pf; x <- px; pure (f x) }  -- Control.Monad.ap
+```
+
+## Alternatywa
+
+Często musimy rozponać "jedno z ..." np
+
+```
+
+Expr ::= int | Bool | id ( CommaSepExprs ) | id
+Bool ::= "true" | "false"
+CommaSepExprs  ::= Expr | Expr "," CommaSepExprs
+```
+
+Wtedy przyda się nam **Alternative** (lub **MonadPlus**):
+
+``` haskell
+instance Alternative Parser where
+  empty = P $ const []
+  (P p1) <|> (P p2) = P $ \s -> p1 s ++ p2 s
+
+instance MonadPlus Parser where
+  mzero = empty
+  mplus = (<|>)
+
+pBool = string "true" *> EBool True
+    <|> string "false" *> EBool False
 ```
 
 ## Inne typy parserów
@@ -118,12 +152,46 @@ String -> Either ErrorMessage (a, String)
 
 zaletą pierwszego typu jest prostota, drugiego - możliwość obsługi błędów.
 
-Pamiętajmy, że przy takich typach, alternatywa jest "lewicowa": parser `p1 <|> p2` bierze pod uwagę tylko lewy parser `p1` o ile się uda;<br/>
-a czasem jeszcze bardziej - `p2` wchodzi do gry tylko gdy `p1` zawiedzie nie konsumując wejścia (nie wracamy do raz przeczytanych znaków).
-W razie potrzeby powrotu można użyć kombinatora `try`, zwykle w wersji `try p1 <|> p2`.
-
 Biblioteki używają często bardziej złożonych typów.<br />
 W naszych przykładach wejście jest typu **String**, ale może być **Text**, **ByteString** lub inne.
+
+### Lewicowa alternatywa
+``` haskell
+String -> Maybe (a, String)
+String -> Either ErrorMessage (a, String)
+```
+
+Alternatywa jest "lewicowa": w `p1 <|> p2` jeśli `p1` odniesie sukces, `p2` nie jest brane pod uwagę<br/>
+(spróbuj napisać `instance Alternative Maybe` a przekonasz się dlaczego)
+
+czasem idzie to dalej - `p2` wchodzi do gry tylko gdy `p1` zawiedzie nie konsumując wejścia (nie wracamy do raz przeczytanych znaków, co dajew liniową złożoność).
+
+W razie potrzeby powrotu, można użyć kombinatora `try`, zwykle w wersji `try p1 <|> p2`.
+
+### Przykład
+
+``` haskell
+-- Expr ::= int | "true" | "false" | id ( CommaSepExprs ) | id
+data Expr = EInt Integer | EBool Bool | ECall Name [Expr] | EVar Name
+
+pExpr :: Parser Expr
+pExpr = choice          -- choice [e1,...,en] = e1 <|> ... <|> en
+    [ EWord <$> integer
+    , EBool True  <$ pKeyword "true"    -- (<$) :: Functor f => a -> f b -> f a
+    , EBool False <$ pKeyword "false"
+    , try (ECall <$> identifier <*> parens (commaSep pExpr))
+    , EVar <$> (identifier  <* notFollowedBy (symbol "("))
+                        -- (<*) :: Applicative f => f a -> f b -> f a
+    ]
+
+-- "true" jest słowem kluczowym, ale "trueCrime" już nie
+pKeyword :: String -> Parser String
+pKeyword w = try $ lexeme (string w <* notFollowedBy identChar)
+
+-- negacja: notFollowedByP odnosi sukces gdy p zawodzi (przybliżenie)
+notFollowedBy :: Show a => Parser a -> Parser ()
+notFollowedBy p = do { c <- try p; unexpected (show c) } <|> return ()
+```
 
 ## Łączenie monad
 
@@ -139,6 +207,7 @@ type ErrorParser a = String -> Either ErrMsg (a, String)
 
 
 ``` haskell
+--      State  s   a ~ State  { runState  :: s ->   (a, s) }
 newtype StateT s m a = StateT { runStateT :: s -> m (a, s) }
 
 type ListParser a  = (StateT String []) a
@@ -232,7 +301,7 @@ runTcS t = runStateT t initState
 ```
 ### MonadIO
 
-Szczególnego traktowania przy łączeniu monad wymaga też IO - musi być na samym dole stosu monad, na przykład.
+Szczególnego traktowania przy łączeniu monad wymaga też IO - musi być na samym dole stosu monad, na przykład:
 
 ``` haskell
 type RedM a = StateT RedS IO a
@@ -280,7 +349,8 @@ Natomiast próba odwrócenia produkcji
 pExp = (pTerm >> '-' >> pExp) <|> pTerm
 ```
 
-Spowoduje, że `x - y - z` zostanie błędnie rozpoznane jako `x - (y - z)`.
+Spowoduje, że `x - y - z` zostanie błędnie rozpoznane jako `x - (y - z)`.<br/>
+Ponadto prawdopodobnie powinniśmy użyć `try` (i to kosztownego).
 
 Problematyczne są wszelkie produkcje postaci `A ::= A X` (lub równoważne)
 
@@ -365,13 +435,13 @@ parsec, megaparsec
 
 ## Rodzaje (kinds)
 
-* Value operations are described by their types
+* Typy klasyfikują wartości i operacje na nich (np. `'x' :: Char`, `isLetter :: Char -> Bool` )
 
-* Type operations are described by their kinds
+* Rodzaje klasyfikują typy i operacje na nich
 
-* Types (e.g.. `Int`, `Int -> Bool`) are of kind `*`
+* Typy są rodzaju `*` (np. `Char -> Bool :: *`)
 
-* One argument constructors are of type  (e.g.. `Tree`) are of kind `* -> *`
+* Jednoargumentowe konstruktory (np. `Tree`) są ropdzaju `* -> *`, dwuargumentowe `* -> * -> *` itp.
 
     ~~~~ {.haskell}
     {-#LANGUAGE KindSignatures, ExplicitForAll #-}
@@ -380,23 +450,23 @@ parsec, megaparsec
         pure :: forall (a :: *).a -> f a
     ~~~~
 
-* More complex kinds are possible, e.g. for monad transformers:
+* Bywają bardiej złożone typy np. dla transformatorów monad
 
     ~~~~ {.haskell}
     class MonadTrans (t :: (* -> *) -> * -> *) where
         lift :: Monad (m :: * -> *) => forall (a :: *).m a -> t m a
     ~~~~
 
-NB spaces are obligatory - `::*->*` is one lexem
+NB spacje są oboiwiązkowe - `::*->*` to jeden leksem
 
-Also note recent trend of using `Type` (imported from `Data.Kind`)instead of `*`:
+W nowsszych wersjach GHC można zamiast `*` używać `Type` (import z `Data.Kind`)
 
 ## Jeszcze o łączeniu monad
 
-Czemu musimy mieć osobny transformator do każdegho rodzaju efektu, zamiast ogólnego schematu?
+Czemu musimy mieć osobny transformator do każdego rodzaju efektu, zamiast ogólnego schematu?
 
 Dla dowolnych funktorów, ich złożenie jest też funktorem
-``` haskell
+``` haskelldewl
 {-# LANGUAGE ScopedTypeVariables #-}
 
 gfmap :: forall f g a b. (Functor g, Functor f)
@@ -453,7 +523,7 @@ swapNM :: n(m a) -> m(n a)
 
 Równowazność `>>=` i `join` możemy wykorzystać dla zdefiniowania instancji `Monad` dla drzew
 
-Dla drzew z wartościoami w liściach jest łatwo:
+Dla drzew z wartościami w liściach jest łatwo:
 
 ``` haskell
 joinT :: ETree(ETree a) -> ETree a
@@ -470,6 +540,7 @@ Dla drzew z wartościami w wierzchołkach wewnętrznych jest trochę trudniej, a
 
 ``` haskell
 instance Semigroup (Tree a) where
+instance Foldable Tree where 
 instance Monoid (Tree a) where
 -- było jako ćwiczenie
 
@@ -478,8 +549,21 @@ joinT :: Tree(Tree a) -> Tree a
 -- joinT (Node t l r) = joinT l <> t <> joinT r
 joinT = foldMap id
 
+-- foldMap f Empty = Empty
+-- foldMap f (Node x l r) = go l <> f x <> go r where go = foldMap f
+
+
 instance Monad Tree where
   -- ta >>= k = joinT (fmap k ta)
-  -- ta >>= k = foldMap k ta
+  --          = foldMap id (fmap k ta)  -- k :: a -> Tree b
+  --          = foldMap k ta
   (>>=) = flip foldMap
 ```
+
+Dowód równości `foldMap id (fmap k ta) = foldMap k ta` pozostawiamy jako ćwiczenie.
+
+# Administrivia
+
+Egzamin ustny 26.6 (dla osób, które nie uzyskają oceny przed sesją)
+
+# Dziekuję za uwagę
