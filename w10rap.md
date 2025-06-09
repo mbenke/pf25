@@ -852,38 +852,6 @@ reverse (reverse xs) = xs
 reverse (xs ++ ys)   = reverse ys ++ reverse xs
 ```
 
-## Prawa dla funkcji `fold*` - twierdzenia o dualności
-
-
-1. Jeśli `⊕` jest operacją łączną z elementem neutralnym `e` to
-
-``` haskell
-foldr (⊕) e xs = foldl (⊕) e xs
-```
-Na przykład `foldr (+) 0 xs = foldl (+) 0 xs`
-
-2. Jeśli `⊕::a->b->b`, `⊗::b->a->b` i `e::b` spełniają warunki
-```
-x ⊕ (y ⊗ z) = (x ⊕ y) ⊗ z
-x ⊕ e = e ⊗ x
-```
-to `foldr (⊕) e xs = foldl (⊗) e xs`
-
-Na przykład
-``` haskell
-reverse = foldr snoc [] where snoc x xs = xs ++ [x]
-reverse = foldl cons [] where cons xs x = [x] ++ xs
-```
-3. Dla wszystkich skończonych list `xs`
-``` haskell
-foldr f e xs = foldl (flip f) e (reverse xs)
-foldl g e xs = foldr (flip g) e (reverse xs) -- konsekwencja
-```
-Na przykład
-``` haskell
-id = foldr (:) [] xs = foldl (flip(:)) [] (reverse xs) = reverse(reverse xs)
-```
-
 # Klasy, metody i własności
 
 Klasy pozwalają nam na tworzenie funkcji generycznych, np.
@@ -918,32 +886,6 @@ fmap (f . g) = (fmap f . fmap g)       -- fmapComp
 
 dzięki nim możemy wykazać `foo = fmap`.
 
-
-### Ćwiczenie
-
-wykaż spełnienie własności
-
-``` haskell
-fmap id = id                           -- fmapId
-fmap (f . g) = (fmap f . fmap g)       -- fmapComp
-```
-
-przez instancje
-
-``` haskell
-instance Functor Maybe where
-  fmap f Nothing  = Nothing
-  fmap f (Just x) = Just (f x)
-```
-
-``` haskell
-data Tree a = Leaf a | Node (Tree a) (Tree a)
-
-instance Functor Tree where
-  fmap f (Leaf x) = Leaf (f x)
-  fmap f (Node l r) = Node (fmap f l) (fmap f r)
-```
-
 ## Prawa dla Monad
 
 Każda instancja `Monad` musi spełniać własności gwarantujace, że sekwencjonowanie jest (w pewnym sensie) łączne<br/>
@@ -971,23 +913,6 @@ f >=> return      =  f
 (f >=> g) >=> h   =  f >=> (g >=> h)
 ```
 
-## Prawa dla Monad - ćwiczenie
-
-``` haskell
-return x >>= f    =  f x
-mx >>= return     =  mx
-(mx >>= f) >>= g  =  mx >>= (\y -> f y >>= g)
-```
-
-**Ćwiczenie:** wykaż, że powyzsze prawa są spełnione dla
-
-``` haskell
-instance Monad Maybe where
-  return         = Just
-  Nothing  >>= f = Nothing
-  (Just x) >>= f = Just (f x)
-```
-
 ## Prawa dla Applicative
 
 Prawa dla Applicative są (przynajmniej na pierwszy rzut oka) trochę bardziej złozone:
@@ -1006,6 +931,56 @@ Jeśli mamy też instancję Monad, to dodatkowo powinno zachodzić
 ``` haskell
 pure = return
 m1 <*> m2 = m1 >>= (x1 -> m2 >>= (x2 -> return (x1 x2)))
+```
+# Administrivia
+
+2 czerwca nie ma wykładu ani labów w moich grupach.
+
+Pozostałe laby normalnie.
+
+# Pytania?
+
+# Bonus
+### Ćwiczenie - prawa dla Functor
+
+wykaż spełnienie własności
+
+``` haskell
+fmap id = id                           -- fmapId
+fmap (f . g) = (fmap f . fmap g)       -- fmapComp
+```
+
+przez instancje
+
+``` haskell
+instance Functor Maybe where
+  fmap f Nothing  = Nothing
+  fmap f (Just x) = Just (f x)
+```
+
+``` haskell
+data Tree a = Leaf a | Node (Tree a) (Tree a)
+
+instance Functor Tree where
+  fmap f (Leaf x) = Leaf (f x)
+  fmap f (Node l r) = Node (fmap f l) (fmap f r)
+```
+
+## Prawa dla Monad - ćwiczenie
+
+``` haskell
+return x >>= f    =  f x
+mx >>= return     =  mx
+(mx >>= f) >>= g  =  mx >>= (\y -> f y >>= g)
+```
+
+**Ćwiczenie:** wykaż, że powyzsze prawa są spełnione dla
+
+``` haskell
+instance Monad Maybe where
+  return         = Just
+  Nothing  >>= f = Nothing
+  (Just x) >>= f = Just (f x)
 ```
 
 ## Prawa dla Applicative - ćwiczenie
@@ -1030,9 +1005,40 @@ instance Applicative Maybe where
   (Just f) <*> (Just x) = Just (f x)
 ```
 
-# Pytania?
 
-# Bonus
+
+## Prawa dla funkcji `fold*` - twierdzenia o dualności
+
+
+1. Jeśli `⊕` jest operacją łączną z elementem neutralnym `e` to
+
+``` haskell
+foldr (⊕) e xs = foldl (⊕) e xs
+```
+Na przykład `foldr (+) 0 xs = foldl (+) 0 xs`
+
+2. Jeśli `⊕::a->b->b`, `⊗::b->a->b` i `e::b` spełniają warunki
+```
+x ⊕ (y ⊗ z) = (x ⊕ y) ⊗ z
+x ⊕ e = e ⊗ x
+```
+to `foldr (⊕) e xs = foldl (⊗) e xs`
+
+Na przykład
+``` haskell
+reverse = foldr snoc [] where snoc x xs = xs ++ [x]
+reverse = foldl cons [] where cons xs x = [x] ++ xs
+```
+3. Dla wszystkich skończonych list `xs`
+``` haskell
+foldr f e xs = foldl (flip f) e (reverse xs)
+foldl g e xs = foldr (flip g) e (reverse xs) -- konsekwencja
+```
+Na przykład
+``` haskell
+id = foldr (:) [] xs = foldl (flip(:)) [] (reverse xs) = reverse(reverse xs)
+```
+
 
 ### Fuzja
 
